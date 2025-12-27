@@ -611,13 +611,24 @@ export const GroceryApp: React.FC = () => {
         }, 0);
       }
     } else if (allCompleted && items.length > 0 && !completionProcessedRef.current) {
-      // Stop any active speech recognition when shopping is complete
+      // Stop any active speech recognition when shopping is complete (aggressive stop)
       if (mode === 'shopping') {
         shoppingRecognition.stopListening();
+        setTimeout(() => shoppingRecognition.stopListening(), 25);
+        setTimeout(() => shoppingRecognition.stopListening(), 50);
+        setTimeout(() => shoppingRecognition.stopListening(), 75);
+        setTimeout(() => shoppingRecognition.stopListening(), 100);
+        setTimeout(() => shoppingRecognition.stopListening(), 150);
+        setTimeout(() => shoppingRecognition.stopListening(), 200);
+        setTimeout(() => shoppingRecognition.stopListening(), 300);
       }
 
       // Mark that we've processed completion to prevent looping
       completionProcessedRef.current = true;
+
+      // Immediately set mode to idle and stop shopping state
+      setMode('idle');
+      setHasStartedShopping(false);
 
       // Show completion toasts
       setTimeout(() => {
@@ -635,11 +646,9 @@ export const GroceryApp: React.FC = () => {
             duration: 5000,
           });
 
-          // Clear the list and reset state after showing celebration messages
+          // Clear the list after showing celebration messages
           setTimeout(() => {
             setItems([]);
-            setMode('idle');
-            setHasStartedShopping(false);
             completionProcessedRef.current = false;
           }, 3000);
         }, 1000);
