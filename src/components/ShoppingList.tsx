@@ -185,8 +185,7 @@ interface ShoppingListProps {
   items: ShoppingItem[];
   onToggleItem: (id: string) => void;
   onRemoveItem: (id: string) => void;
-  mode?: 'adding' | 'shopping' | 'idle';
-  hasStartedShopping?: boolean;
+  viewMode?: 'editing' | 'shopping';
   className?: string;
 }
 
@@ -194,8 +193,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
   items,
   onToggleItem,
   onRemoveItem,
-  mode = 'idle',
-  hasStartedShopping = false,
+  viewMode = 'editing',
   className
 }) => {
   if (items.length === 0) {
@@ -236,7 +234,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
   const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
     const indexA = categoryOrder.indexOf(a);
     const indexB = categoryOrder.indexOf(b);
-    // Put unknown categories at the end
+    // Put unknown categories at end
     if (indexA === -1 && indexB === -1) return 0;
     if (indexA === -1) return 1;
     if (indexB === -1) return -1;
@@ -245,27 +243,13 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
 
   return (
     <Card className={cn("p-6 md:p-8 shadow-card rounded-2xl border-0 bg-white/80 backdrop-blur-sm", className)}>
-      {/* Status Messages - integrated into the shopping list card */}
-      {(mode === 'adding' || mode === 'idle' || mode === 'shopping' || hasStartedShopping) && (
+      {/* Status Messages - integrated into shopping list card */}
+      {viewMode === 'shopping' && (
         <div className="mb-6 -mt-2 -mx-2 px-4 py-3 rounded-t-2xl border-b border-primary/10">
           <div className="flex justify-center">
-            {mode === 'adding' && (
-              <div className="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                🎤 Adding Items
-              </div>
-            )}
-
-            {mode === 'idle' && items.length > 0 && !hasStartedShopping && (
-              <div className="px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                ✅ Ready to Shop
-              </div>
-            )}
-
-            {(mode === 'shopping' || hasStartedShopping) && (
-              <div className="px-4 py-2 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
-                🛒 Shopping
-              </div>
-            )}
+            <div className="px-4 py-2 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
+              🛒 Shopping Mode
+            </div>
           </div>
         </div>
       )}
@@ -273,7 +257,7 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
       <div className="space-y-8">
         {sortedCategories.map((category) => (
           <div key={category} className="space-y-3">
-            <h3 className={cn("text-lg font-bold pl-2 border-l-4", CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.other)}>
+            <h3 className={cn("sticky top-0 z-10 text-lg font-bold pl-2 border-l-4 bg-white/95 backdrop-blur-sm py-2", CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.other)}>
               {CATEGORY_NAMES[category] || category.charAt(0).toUpperCase() + category.slice(1)}
             </h3>
             <div className="space-y-3">
@@ -290,13 +274,13 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
                 >
                   <button
                     onClick={() => onToggleItem(item.id)}
-                    className="flex-shrink-0 transition-transform duration-300 hover:scale-110 p-2"
+                    className="flex-shrink-0 transition-transform duration-300 hover:scale-110 p-3 md:p-2 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
                     aria-label={item.completed ? "Mark as not completed" : "Mark as completed"}
                   >
                     {item.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-primary animate-check-bounce" />
+                      <CheckCircle2 className="w-6 h-6 md:w-5 md:h-5 text-primary animate-check-bounce" />
                     ) : (
-                      <Circle className="w-5 h-5 text-muted-foreground hover:text-primary" />
+                      <Circle className="w-6 h-6 md:w-5 md:h-5 text-muted-foreground hover:text-primary" />
                     )}
                   </button>
                   
@@ -323,15 +307,18 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
                     {item.name}
                   </span>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveItem(item.id)}
-                    className="flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 rounded-xl transition-colors"
-                    aria-label="Remove item"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </Button>
+                  {/* Only show remove button in editing mode */}
+                  {viewMode === 'editing' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-3 md:p-2 rounded-xl transition-colors min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 className="w-6 h-6 md:w-5 md:h-5" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

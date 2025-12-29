@@ -29,7 +29,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
     continuous = true,
     interimResults = true,
     lang = 'en-US',
-    timeout = 3000, // Default 3 seconds
+    timeout = 5000, // Default 5 seconds
     onResult,
     onEnd,
     onError,
@@ -125,7 +125,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
                  console.error('Failed to auto-stop recognition:', error);
                }
              }
-           }, 8000); // 8 seconds - longer for mobile but still auto-stop
+           }, 5000); // 5 seconds - inactivity timeout
          }
         
         let interimTranscript = '';
