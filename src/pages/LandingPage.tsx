@@ -9,7 +9,7 @@ const LandingPage = () => {
         <img
           src={landingImage}
           alt="Grocery shopping illustration"
-          className="max-w-full h-auto w-full sm:w-80 md:w-96"
+          className="max-w-full h-auto w-full max-w-[280px] sm:max-w-xs md:max-w-sm lg:max-w-md object-contain"
         />
       </div>
       <div className="bg-white p-6 md:p-8 rounded-t-3xl shadow-lg flex-shrink-0">
