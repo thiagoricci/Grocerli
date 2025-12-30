@@ -69,7 +69,7 @@ export const GroceryApp: React.FC = () => {
   const speechRecognition = useSpeechRecognition({
     continuous: true,
     interimResults: true,
-    timeout: 5000,
+    timeout: 3000,
     onResult: (transcript, isFinal) => {
       if (transcript.trim()) {
         const lowerTranscript = transcript.toLowerCase().trim();

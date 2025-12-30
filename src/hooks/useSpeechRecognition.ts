@@ -29,7 +29,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
     continuous = true,
     interimResults = true,
     lang = 'en-US',
-    timeout = 5000, // Default 5 seconds
+    timeout = 3000, // Default 3 seconds
     onResult,
     onEnd,
     onError,
@@ -44,10 +44,9 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
   const isListeningRef = useRef(false);
   const manuallyStoppedRef = useRef(false);
   const forceStoppedRef = useRef(false); // New ref to prevent any restart attempts
-  const autoStopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stopRequestedRef = useRef(false); // Track when stop has been requested
 
   const recognitionRef = useRef<any>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,6 +67,12 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
       // Mobile-optimized audioend handler - only restart if explicitly needed
        recognition.addEventListener('audioend', () => {
          isListeningRef.current = false;
+         
+         // CRITICAL: Check stopRequested FIRST - if stop was requested, never restart
+         if (stopRequestedRef.current) {
+           return; // Exit immediately - no restart
+         }
+         
          // Only restart if NOT manually stopped, NOT force stopped, and still supposed to be listening
          // Add additional check to prevent unwanted restarts on mobile
          // IMPORTANT: Use isListeningRef.current instead of isListening (state) because state is asynchronous
@@ -75,7 +80,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
            // Small delay to prevent rapid restarts
            audioendTimeoutRef.current = setTimeout(() => {
              // Triple check all conditions before restarting - ensure manuallyStopped and forceStopped are still false
-             if (isListeningRef.current && !manuallyStoppedRef.current && !forceStoppedRef.current && recognitionRef.current) {
+             if (isListeningRef.current && !manuallyStoppedRef.current && !forceStoppedRef.current && !stopRequestedRef.current && recognitionRef.current) {
                try {
                  recognitionRef.current.start();
                  isListeningRef.current = true;
@@ -94,7 +99,7 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
           clearTimeout(inactivityTimeoutRef.current);
         }
         
-        // Set new inactivity timeout - longer for mobile to prevent unwanted stops
+        // Set new inactivity timeout - 3 seconds to stop microphone when inactive
          if (timeout > 0 && isListeningRef.current) {
            inactivityTimeoutRef.current = setTimeout(() => {
              if (isListeningRef.current && recognitionRef.current && !manuallyStoppedRef.current) {
@@ -109,24 +114,6 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
            }, timeout);
          }
 
-        // Set auto-stop timeout (longer for mobile to prevent unwanted stops)
-         if (isListeningRef.current && !manuallyStoppedRef.current) {
-           if (autoStopTimeoutRef.current) {
-             clearTimeout(autoStopTimeoutRef.current);
-           }
-           autoStopTimeoutRef.current = setTimeout(() => {
-             if (isListeningRef.current && !manuallyStoppedRef.current && recognitionRef.current) {
-               try {
-                 // Use abort instead of stop for more forceful termination
-                 recognitionRef.current.abort();
-                 setIsListening(false);
-                 isListeningRef.current = false;
-               } catch (error) {
-                 console.error('Failed to auto-stop recognition:', error);
-               }
-             }
-           }, 5000); // 5 seconds - inactivity timeout
-         }
         
         let interimTranscript = '';
         let finalText = '';
@@ -194,14 +181,8 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
     }
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
       if (inactivityTimeoutRef.current) {
         clearTimeout(inactivityTimeoutRef.current);
-      }
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current);
       }
       if (audioendTimeoutRef.current) {
         clearTimeout(audioendTimeoutRef.current);
@@ -216,9 +197,6 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
       if (inactivityTimeoutRef.current) {
         clearTimeout(inactivityTimeoutRef.current);
       }
-      if (autoStopTimeoutRef.current) {
-        clearTimeout(autoStopTimeoutRef.current);
-      }
       if (audioendTimeoutRef.current) {
         clearTimeout(audioendTimeoutRef.current);
       }
@@ -229,6 +207,9 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
     if (!isSupported || !recognitionRef.current) return;
 
     try {
+      // CRITICAL: Clear stop flag before starting
+      stopRequestedRef.current = false;
+      
       setIsListening(true);
       isListeningRef.current = true;
       setManuallyStopped(false); // Reset manual stop flag when starting
@@ -247,58 +228,32 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
   const stopListening = useCallback(() => {
     if (!recognitionRef.current) return;
 
+    // CRITICAL: Set stop flag FIRST (synchronous) to prevent any restarts
+    stopRequestedRef.current = true;
+    
     // Immediately set all flags to prevent any restarts (synchronous)
     setIsListening(false);
     isListeningRef.current = false;
     setManuallyStopped(true);
     manuallyStoppedRef.current = true;
-    forceStoppedRef.current = true; // Set force stop flag immediately to prevent any restart attempts
+    forceStoppedRef.current = true;
 
-    // Clear all timeouts immediately
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
+    // Clear all timeouts immediately (synchronous)
     if (inactivityTimeoutRef.current) {
       clearTimeout(inactivityTimeoutRef.current);
       inactivityTimeoutRef.current = null;
-    }
-    if (autoStopTimeoutRef.current) {
-      clearTimeout(autoStopTimeoutRef.current);
-      autoStopTimeoutRef.current = null;
     }
     if (audioendTimeoutRef.current) {
       clearTimeout(audioendTimeoutRef.current);
       audioendTimeoutRef.current = null;
     }
 
-    // Force stop the recognition immediately with multiple methods (synchronous)
+    // Force stop the recognition immediately (synchronous)
     try {
-      // Abort is more forceful than stop - try multiple times immediately
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
-      recognitionRef.current.abort();
       recognitionRef.current.abort();
     } catch (error) {
-      // If abort fails, try stop multiple times
+      // If abort fails, try stop
       try {
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
-        recognitionRef.current.stop();
         recognitionRef.current.stop();
       } catch (stopError) {
         console.error('Failed to stop speech recognition:', stopError);
@@ -309,74 +264,6 @@ export const useSpeechRecognition = (options: UseSpeechRecognitionOptions = {}):
     setIsListening(false);
     isListeningRef.current = false;
     forceStoppedRef.current = true;
-
-    // Additional safety: ensure no restart can happen (minimal delay)
-    setTimeout(() => {
-      try {
-        if (recognitionRef.current) {
-          recognitionRef.current.abort();
-        }
-        // Double-check force stop flag
-        forceStoppedRef.current = true;
-      } catch (e) {
-        // Ignore errors
-      }
-    }, 10);
-
-    // Final safety check (minimal delay)
-    setTimeout(() => {
-      try {
-        if (recognitionRef.current) {
-          recognitionRef.current.abort();
-        }
-        forceStoppedRef.current = true;
-      } catch (e) {
-        // Ignore errors
-      }
-    }, 25);
-
-    // Mobile-specific: Add additional cleanup to prevent microphone staying on (minimal delay)
-    setTimeout(() => {
-      try {
-        if (recognitionRef.current) {
-          // Force disconnect and cleanup
-          recognitionRef.current.abort();
-        }
-        forceStoppedRef.current = true;
-      } catch (e) {
-        // Ignore errors
-      }
-    }, 50);
-
-    // Final cleanup - ensure everything is stopped (minimal delay)
-    setTimeout(() => {
-      try {
-        if (recognitionRef.current) {
-          recognitionRef.current.abort();
-          // Force state cleanup
-          setIsListening(false);
-          isListeningRef.current = false;
-        }
-        forceStoppedRef.current = true;
-      } catch (e) {
-        // Ignore errors
-      }
-    }, 100);
-
-    // Extra cleanup for mobile devices (minimal delay)
-    setTimeout(() => {
-      try {
-        if (recognitionRef.current) {
-          recognitionRef.current.abort();
-        }
-        // Force state reset even if recognition ref is null
-        setIsListening(false);
-        isListeningRef.current = false;
-        forceStoppedRef.current = true;
-      } catch (e) {
-        // Ignore errors
-      }
-    }, 200);
   }, []);
 
   const resetTranscript = useCallback(() => {
