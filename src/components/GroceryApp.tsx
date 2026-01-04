@@ -22,6 +22,8 @@ export const GroceryApp: React.FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [textInput, setTextInput] = useState('');
   const [activeTab, setActiveTab] = useState('make-list');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
   const { toast } = useToast();
   const completionProcessedRef = useRef(false);
 
@@ -258,12 +260,56 @@ export const GroceryApp: React.FC = () => {
   }, [extractQuantity, toast]);
 
 
+  // Add raw item without any parsing or validation
+  const addRawItem = useCallback((rawText: string) => {
+    const trimmed = rawText.trim();
+    
+    // Skip empty input
+    if (!trimmed) return;
+    
+    // Capitalize first letter only
+    const displayName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    
+    // Check for duplicate (case-insensitive)
+    const isDuplicate = items.some(item =>
+      item.name.toLowerCase() === displayName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      toast({
+        title: "Item Already Exists",
+        description: `"${displayName}" is already in your list.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Create new item with exact text
+    const newItem: ShoppingItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: displayName,
+      completed: false,
+      quantity: undefined,
+      unit: undefined,
+    };
+    
+    // Add to list
+    setItems(prev => [...prev, newItem]);
+    
+    // Show success toast
+    toast({
+      title: "Item Added",
+      description: `Added "${displayName}" to your list.`,
+    });
+  }, [items, toast]);
+
+
   const handleTextInputSubmit = useCallback(() => {
     if (textInput.trim()) {
-      parseAndAddItems(textInput.trim());
+      addRawItem(textInput.trim());
       setTextInput('');
     }
-  }, [textInput, parseAndAddItems]);
+  }, [textInput, addRawItem]);
 
   const handleToggleItem = (id: string) => {
     setItems(prev => {
@@ -278,6 +324,64 @@ export const GroceryApp: React.FC = () => {
   const handleRemoveItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
   };
+
+  // Handle editing an item
+  const handleEditItem = useCallback((id: string, newName: string) => {
+    // If this is the first click on an item, enter edit mode
+    if (editingItemId === null || editingItemId !== id) {
+      setEditingItemId(id);
+      setEditValue(newName);
+      return;
+    }
+
+    // If already editing, save the changes
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      toast({
+        title: "Cannot Save",
+        description: "Item name cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Capitalize first letter only
+    const displayName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+
+    // Check for duplicate (excluding current item)
+    const isDuplicate = items.some(item =>
+      item.id !== id && item.name.toLowerCase() === displayName.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: "Item Already Exists",
+        description: `"${displayName}" is already in your list.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Update item name
+    setItems(prev => prev.map(item =>
+      item.id === id ? { ...item, name: displayName } : item
+    ));
+
+    // Exit edit mode
+    setEditingItemId(null);
+    setEditValue('');
+
+    toast({
+      title: "Item Updated",
+      description: `Changed to "${displayName}".`,
+    });
+  }, [editingItemId, items, toast]);
+
+  // Handle canceling edit
+  const handleCancelEdit = useCallback(() => {
+    setEditingItemId(null);
+    setEditValue('');
+  }, []);
 
   const handleClearList = () => {
     setItems([]);
@@ -504,6 +608,11 @@ export const GroceryApp: React.FC = () => {
                   items={items}
                   onToggleItem={handleToggleItem}
                   onRemoveItem={handleRemoveItem}
+                  onEditItem={handleEditItem}
+                  onCancelEdit={handleCancelEdit}
+                  editingItemId={editingItemId}
+                  editValue={editValue}
+                  onEditValueChange={setEditValue}
                   viewMode="editing"
                   className="animate-slide-up"
                 />
@@ -559,6 +668,11 @@ export const GroceryApp: React.FC = () => {
                   items={items}
                   onToggleItem={handleToggleItem}
                   onRemoveItem={handleRemoveItem}
+                  onEditItem={handleEditItem}
+                  onCancelEdit={handleCancelEdit}
+                  editingItemId={editingItemId}
+                  editValue={editValue}
+                  onEditValueChange={setEditValue}
                   viewMode="shopping"
                   className="animate-slide-up"
                 />

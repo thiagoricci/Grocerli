@@ -4,9 +4,12 @@ import {
   CheckCircle2,
   Circle,
   Trash2,
-  ShoppingCart
+  ShoppingCart,
+  Check,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { getItemCategory, CATEGORY_NAMES } from '@/data/groceryItems';
 
@@ -185,6 +188,11 @@ interface ShoppingListProps {
   items: ShoppingItem[];
   onToggleItem: (id: string) => void;
   onRemoveItem: (id: string) => void;
+  onEditItem?: (id: string, newName: string) => void;
+  onCancelEdit?: () => void;
+  editingItemId?: string | null;
+  editValue?: string;
+  onEditValueChange?: (value: string) => void;
   viewMode?: 'editing' | 'shopping';
   className?: string;
 }
@@ -193,6 +201,11 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
   items,
   onToggleItem,
   onRemoveItem,
+  onEditItem,
+  onCancelEdit,
+  editingItemId,
+  editValue,
+  onEditValueChange,
   viewMode = 'editing',
   className
 }) => {
@@ -264,41 +277,77 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
               {groupedItems[category].map((item, index) => (
                 <div
                   key={item.id}
-                  onClick={viewMode === 'shopping' ? () => onToggleItem(item.id) : undefined}
+                  onClick={viewMode === 'shopping' && editingItemId !== item.id ? () => onToggleItem(item.id) : undefined}
                   className={cn(
                     "flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 animate-slide-up",
-                    viewMode === 'shopping' && "hover:shadow-md cursor-pointer",
+                    viewMode === 'shopping' && editingItemId !== item.id && "hover:shadow-md cursor-pointer",
                     item.completed
                       ? "bg-secondary/50 border-primary/20"
                       : "bg-background border-border hover:border-primary/30"
                   )}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  {/* Item-specific or category emoji */}
-                  <span className="text-4xl text-muted-foreground flex-shrink-0">
-                    {getItemEmoji(item.name)}
-                  </span>
+                  {viewMode === 'editing' && editingItemId === item.id ? (
+                    // Edit mode - show input field with save/cancel buttons
+                    <div className="flex-1 flex gap-2">
+                      <Input
+                        type="text"
+                        value={editValue || ''}
+                        onChange={(e) => onEditValueChange && onEditValueChange(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            onEditItem && onEditItem(item.id, editValue || '');
+                          } else if (e.key === 'Escape') {
+                            onCancelEdit && onCancelEdit();
+                          }
+                        }}
+                        autoFocus
+                        className="h-10 text-base"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => onEditItem && onEditItem(item.id, editValue || '')}
+                        className="bg-green-500 hover:bg-green-600 h-10 px-3"
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCancelEdit && onCancelEdit()}
+                        className="h-10 px-3"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    // Normal display mode
+                    <span
+                      onClick={viewMode === 'editing' ? () => {
+                        onEditValueChange && onEditValueChange(item.name);
+                        onEditItem && onEditItem(item.id, item.name);
+                      } : undefined}
+                      className={cn(
+                        "flex-1 text-lg font-medium transition-all duration-300 py-2",
+                        viewMode === 'editing' && "cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2",
+                        item.completed
+                          ? "text-muted-foreground line-through opacity-70"
+                          : "text-foreground"
+                      )}
+                    >
+                      {/* Quantity and unit display */}
+                      {((item.quantity !== undefined && item.quantity !== null) || item.unit) && (
+                        <span className="font-bold text-primary mr-2">
+                          {item.quantity !== undefined && item.quantity !== null ? item.quantity : ''}
+                          {item.unit && <span className="lowercase">{item.unit}</span>}
+                        </span>
+                      )}
+                      {item.name}
+                    </span>
+                  )}
                   
-                  <span
-                    className={cn(
-                      "flex-1 text-lg font-medium transition-all duration-300 py-2",
-                      item.completed
-                        ? "text-muted-foreground line-through opacity-70"
-                        : "text-foreground"
-                    )}
-                  >
-                    {/* Quantity and unit display */}
-                    {((item.quantity !== undefined && item.quantity !== null) || item.unit) && (
-                      <span className="font-bold text-primary mr-2">
-                        {item.quantity !== undefined && item.quantity !== null ? item.quantity : ''}
-                        {item.unit && <span className="lowercase">{item.unit}</span>}
-                      </span>
-                    )}
-                    {item.name}
-                  </span>
-                  
-                  {/* Only show remove button in editing mode */}
-                  {viewMode === 'editing' && (
+                  {/* Only show remove button in editing mode when not editing */}
+                  {viewMode === 'editing' && editingItemId !== item.id && (
                     <Button
                       variant="ghost"
                       size="sm"
