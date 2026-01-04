@@ -1,6 +1,6 @@
 {
-  "name": "Voice Shopper",
-  "short_name": "VoiceShopper",
+  "name": "Grocerly",
+  "short_name": "Grocerly",
   "description": "Voice-controlled grocery shopping application",
   "start_url": "/",
   "display": "standalone",

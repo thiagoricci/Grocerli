@@ -18,7 +18,7 @@ const MenuPage = () => {
                 </svg>
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-semibold">Voice Shopper</h3>
+                <h3 className="text-lg font-semibold">Grocerly</h3>
                 <p className="text-gray-600">Create your grocery list using voice commands</p>
               </div>
             </div>

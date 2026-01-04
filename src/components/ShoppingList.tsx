@@ -264,27 +264,16 @@ export const ShoppingList: React.FC<ShoppingListProps> = ({
               {groupedItems[category].map((item, index) => (
                 <div
                   key={item.id}
-                  onClick={() => onToggleItem(item.id)}
+                  onClick={viewMode === 'shopping' ? () => onToggleItem(item.id) : undefined}
                   className={cn(
-                    "flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 animate-slide-up hover:shadow-md cursor-pointer",
+                    "flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 animate-slide-up",
+                    viewMode === 'shopping' && "hover:shadow-md cursor-pointer",
                     item.completed
                       ? "bg-secondary/50 border-primary/20"
                       : "bg-background border-border hover:border-primary/30"
                   )}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <button
-                    onClick={() => onToggleItem(item.id)}
-                    className="flex-shrink-0 transition-transform duration-300 hover:scale-110 p-3 md:p-2 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
-                    aria-label={item.completed ? "Mark as not completed" : "Mark as completed"}
-                  >
-                    {item.completed ? (
-                      <CheckCircle2 className="w-6 h-6 md:w-5 md:h-5 text-primary animate-check-bounce" />
-                    ) : (
-                      <Circle className="w-6 h-6 md:w-5 md:h-5 text-muted-foreground hover:text-primary" />
-                    )}
-                  </button>
-                  
                   {/* Item-specific or category emoji */}
                   <span className="text-4xl text-muted-foreground flex-shrink-0">
                     {getItemEmoji(item.name)}

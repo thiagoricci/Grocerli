@@ -213,7 +213,8 @@ export const GroceryApp: React.FC = () => {
 
         if (nonGroceryWords.includes(lowerItem)) return false;
 
-        return isValidGroceryItem(lowerItem);
+        // Allow all items, not just those in the grocery database
+        return true;
       });
 
     const newItems: ShoppingItem[] = cleanedItems
@@ -221,10 +222,13 @@ export const GroceryApp: React.FC = () => {
         const { quantity, unit, itemName: nameWithoutQuantity } = extractQuantity(itemName);
         const finalName = nameWithoutQuantity || itemName;
 
-        const bestMatch = findBestMatch(finalName) || finalName;
+        // Try to find best match in database, otherwise use the item name as-is
+        const bestMatch = findBestMatch(finalName);
+        const displayName = bestMatch || finalName;
+        
         return {
           id: Math.random().toString(36).substr(2, 9),
-          name: bestMatch.charAt(0).toUpperCase() + bestMatch.slice(1),
+          name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
           completed: false,
           quantity: quantity || undefined,
           unit: unit || undefined,
@@ -250,14 +254,6 @@ export const GroceryApp: React.FC = () => {
 
         return [...prevItems, ...itemsToAdd];
       });
-    } else if (cleanedItems.length === 0) {
-      setTimeout(() => {
-        toast({
-          title: "No items recognized",
-          description: "Try speaking more clearly or use words like 'and' between items",
-          variant: "destructive",
-        });
-      }, 0);
     }
   }, [extractQuantity, toast]);
 
@@ -299,36 +295,14 @@ export const GroceryApp: React.FC = () => {
       return;
     }
 
-    // Save to history
-    const now = Date.now();
-    if (editingListId) {
-      setHistory(prev => prev.map(list =>
-        list.id === editingListId
-          ? { ...list, items: [...items], updatedAt: now }
-          : list
-      ));
-      toast({
-        title: "List Updated",
-        description: "Your shopping list has been updated.",
-      });
-    } else {
-      const newList: SavedList = {
-        id: generateId(),
-        items: [...items],
-        createdAt: now,
-        updatedAt: now,
-      };
-      setHistory(prev => [newList, ...prev.slice(0, 9)]);
-      setEditingListId(newList.id);
-      toast({
-        title: "List Saved",
-        description: "Your shopping list has been saved to history.",
-      });
-    }
-
-    // Switch to shopping mode
+    // Switch to shopping mode (list is already auto-saved to current storage)
     setViewMode('shopping');
     setActiveTab('make-list');
+    
+    toast({
+      title: "Ready to Shop!",
+      description: "Your list is ready. Check off items as you shop.",
+    });
   };
 
   const handleBackToEdit = () => {
@@ -344,9 +318,20 @@ export const GroceryApp: React.FC = () => {
 
       setTimeout(() => {
         playSuccessSound();
+        
+        // Save completed list to history
+        const now = Date.now();
+        const completedList: SavedList = {
+          id: generateId(),
+          items: [...items],
+          createdAt: now,
+          updatedAt: now,
+        };
+        setHistory(prev => [completedList, ...prev.slice(0, 9)]);
+        
         toast({
           title: "🎉 Shopping Complete!",
-          description: "Congratulations! You've completed your shopping list!",
+          description: "Congratulations! Your list has been saved to history.",
         });
 
         setTimeout(() => {
@@ -404,7 +389,12 @@ export const GroceryApp: React.FC = () => {
   const loadFromHistory = (listId: string) => {
     const list = history.find(l => l.id === listId);
     if (list) {
-      setItems(list.items);
+      // Reset all items to not completed state
+      const resetItems = list.items.map(item => ({
+        ...item,
+        completed: false
+      }));
+      setItems(resetItems);
       setEditingListId(listId);
       setActiveTab('make-list');
       setViewMode('editing');
@@ -449,7 +439,7 @@ export const GroceryApp: React.FC = () => {
         {/* Header */}
         <div className="text-center py-4 md:py-6">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">
-            Voice Shopper
+            Grocerly
           </h1>
         </div>
 
@@ -492,7 +482,7 @@ export const GroceryApp: React.FC = () => {
                         handleTextInputSubmit();
                       }
                     }}
-                    className="h-12 md:h-14 text-base"
+                    className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
 
@@ -504,7 +494,7 @@ export const GroceryApp: React.FC = () => {
                       size="lg"
                       className="px-8 py-3 md:py-3 text-white rounded-full shadow-lg hover:shadow-xl transition-all font-medium bg-blue-500 hover:bg-blue-600 min-h-[48px] md:min-h-0"
                     >
-                      Done
+                      Start Shopping
                     </Button>
                   </div>
                 )}
@@ -526,6 +516,22 @@ export const GroceryApp: React.FC = () => {
                   <p className="text-lg md:text-xl font-semibold text-muted-foreground">
                     Shopping Mode
                   </p>
+                </div>
+
+                {/* Input Field - Allow adding items while shopping */}
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Add more items..."
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTextInputSubmit();
+                      }
+                    }}
+                    className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                  />
                 </div>
 
                 {/* Progress Bar */}
