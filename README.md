@@ -1,36 +1,32 @@
-# 🎤 Voice Shopper - AI-Powered Grocery Assistant
+# 🛒 Grocerli - Smart Grocery Shopping Assistant
 
-A revolutionary voice-controlled grocery shopping application that transforms how you create and manage shopping lists. Simply speak your grocery needs and let AI handle the rest!
+A modern grocery shopping application that helps you create and manage shopping lists with ease. Simply type your grocery needs and let Grocerli handle the rest!
 
-![Voice Shopper Demo](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Voice+Shopper+Demo)
+![Grocerli Demo](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Grocerli+Demo)
 
 ## ✨ Key Features
 
-### 🎯 **Smart Voice Recognition**
+### 🎯 **Easy Text Input**
 
-- **Natural Language Processing**: Speak naturally with support for quantities, compound items, and conversational patterns
-- **Advanced Parsing**: Automatically recognizes and separates items using words like "and", "also", "plus", "then"
-- **Fast Response**: Optimized 3-second microphone timeout for quick operation
-- **Mobile Optimized**: Special optimizations for mobile devices with continuous listening and auto-restart capabilities
+- **Simple Interface**: Type items directly into the input field
+- **Quick Entry**: Press Enter to add items instantly
+- **Smart Parsing**: Automatically extracts quantities from your input
+- **Duplicate Detection**: Prevents adding the same item twice
 
 ### 🛒 **Dual-Mode Operation**
 
-- **Adding Mode**: Voice input for creating shopping lists with real-time feedback
-- **Shopping Mode**: Hands-free item check-off while shopping
-- **Smart Item Recognition**: Comprehensive grocery database ensures accurate item identification
+- **Editing Mode**: Create and manage your shopping list
+- **Shopping Mode**: Check off items as you shop with progress tracking
+- **Flexible Editing**: Edit item names or remove items anytime
+- **Add While Shopping**: Continue adding items even in shopping mode
 
 ### 🎉 **Enhanced User Experience**
 
 - **Celebration System**: Audio celebration when shopping list is completed
-- **Visual Feedback**: Real-time transcript display and animated UI elements
-- **Progress Tracking**: Live completion counter and remaining items display
-- **History Management**: Save and reload previous shopping lists
-
-### ⌨️ **Keyboard Shortcuts**
-
-- **A**: Start adding items (when idle)
-- **S**: Start shopping mode (when items exist)
-- **Escape**: Stop current action
+- **Visual Feedback**: Smooth animations and real-time updates
+- **Progress Tracking**: Live completion counter and percentage display
+- **History Management**: Save and reload previous shopping lists (up to 10 lists)
+- **Local Storage**: Your lists persist between sessions
 
 ### 📱 **Modern Interface**
 
@@ -38,14 +34,14 @@ A revolutionary voice-controlled grocery shopping application that transforms ho
 - **Beautiful Animations**: Smooth transitions and micro-interactions
 - **Accessibility**: Full keyboard navigation and screen reader support
 - **Clean UI**: Streamlined interface with no unnecessary visual clutter
+- **Category Organization**: Items automatically grouped by category with emojis
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Modern web browser with microphone access
-- Internet connection for speech recognition
+- Modern web browser
 
 ### Installation
 
@@ -53,7 +49,7 @@ A revolutionary voice-controlled grocery shopping application that transforms ho
 
    ```bash
    git clone <YOUR_GIT_URL>
-   cd voice-shopper
+   cd grocerli
    ```
 
 2. **Install dependencies**
@@ -69,27 +65,45 @@ A revolutionary voice-controlled grocery shopping application that transforms ho
    ```
 
 4. **Open your browser**
-   Navigate to `http://localhost:5173` and grant microphone permissions when prompted.
+   Navigate to `http://localhost:5173`
 
-## 🎤 Voice Commands
+## 📋 Usage Guide
 
-### Adding Items
+### Getting Started
 
-Speak naturally using these patterns:
+1. **Add Items**: Type items in the input field and press Enter
+2. **Edit List**: Click on any item to edit its name
+3. **Remove Items**: Click the delete button to remove items
+4. **Start Shopping**: Click "Start Shopping" when your list is ready
+5. **Check Off Items**: Click items to mark them as completed
+6. **Complete**: Enjoy the celebration when your list is done!
 
-- **Basic**: "apples and bananas"
-- **With quantities**: "2 apples and 3 bananas"
-- **Word quantities**: "a dozen eggs and two loaves of bread"
-- **Conversational**: "I need milk also some bread and maybe some eggs"
-- **Separators**: Use "and", "also", "plus", "then", commas, or just speak clearly
+### Tips for Best Results
 
-### Shopping Mode
+- **Type clearly** and press Enter to add items
+- **Include quantities** naturally: "2 apples", "a dozen eggs"
+- **Use compound words**: "peanut butter", "orange juice"
+- **Edit items** by clicking on them to correct mistakes
+- **Save time** by using the history tab to reload previous lists
 
-Simply say item names to check them off:
+### Supported Item Types
 
-- "apples" (checks off apples)
-- "milk" (checks off milk)
-- "bread" (checks off bread)
+- **Fresh Produce**: fruits, vegetables, herbs
+- **Dairy**: milk, cheese, yogurt, eggs
+- **Bakery**: bread, pastries, baked goods
+- **Meat & Seafood**: beef, chicken, fish, seafood
+- **Pantry Staples**: canned goods, pasta, rice, beans
+- **Beverages**: juices, sodas, water, coffee, tea
+- **Household**: cleaning supplies, paper products
+- **Personal Care**: toiletries, medications
+
+### Shopping List Features
+
+- **Editing Mode**: Create and modify your shopping list
+- **Shopping Mode**: Check off items with progress tracking
+- **Item Management**: Edit names, remove items, add quantities
+- **History**: Save up to 10 completed shopping lists
+- **Persistence**: Lists automatically saved to local storage
 
 ## 🏗️ Technical Architecture
 
@@ -104,59 +118,40 @@ Simply say item names to check them off:
 
 ### Core Technologies
 
-- **Web Speech API** - Browser-native speech recognition
-- **Custom Hooks** - Reusable speech recognition logic
-- **Context API** - State management for shopping data
+- **React Hooks** - useState, useEffect, useCallback for state management
 - **Local Storage** - Persistent shopping list history
 - **Web Audio API** - Celebration sound effects
+- **Context API** - State management for shopping data
 
 ### Performance Optimizations
 
-- **Debounced Processing** - Optimized speech input handling
-- **Mobile-First** - Responsive design with mobile speech optimizations
-- **Lazy Loading** - Efficient component rendering
-- **Error Handling** - Robust error recovery for speech recognition
-- **Fast Microphone Control** - 3-second timeout for quick microphone stopping
-- **Aggressive Stop Mechanism** - Multiple stop attempts ensure immediate microphone termination
-- **Clean State Management** - Proper cleanup prevents memory leaks and hanging processes
+- **Debounced Processing** - Optimized input handling
+- **Mobile-First** - Responsive design with mobile optimizations
+- **Efficient Rendering** - Optimized component updates
+- **Clean State Management** - Proper cleanup prevents memory leaks
 
-## 📋 Usage Guide
+## 🎨 Features in Detail
 
-### Getting Started
+### Text Input System
 
-1. **Grant Permissions**: Allow microphone access when prompted
-2. **Add Items**: Click "Add Items" and speak your grocery list
-3. **Stop Adding**: Click "Stop Adding" when finished with your list
-4. **Review List**: See your items appear with smart categorization
-5. **Start Shopping**: Click "Start Shopping" for hands-free check-off
-6. **Complete**: Enjoy the celebration when your list is done!
+- **Quantity Extraction**: Automatically detects numeric and word-based quantities
+- **Smart Parsing**: Handles "2 apples", "a dozen eggs", "three bananas"
+- **Duplicate Prevention**: Warns when trying to add existing items
+- **Quick Entry**: Press Enter to add items instantly
 
-### Tips for Best Results
+### Shopping List Management
 
-- **Speak clearly** and at a normal pace
-- **Use natural pauses** between items
-- **Try different separators** like "and", "also", or commas
-- **Include quantities** naturally: "2 apples", "a dozen eggs"
-- **Use compound words**: "peanut butter", "orange juice"
-- **Click "Stop Adding"** to finish your list (no voice commands needed)
+- **Edit Items**: Click on any item to modify its name
+- **Remove Items**: Delete items you no longer need
+- **Progress Tracking**: Visual progress bar shows completion status
+- **Auto-Save**: Lists automatically saved to local storage
 
-### Supported Item Types
+### History System
 
-- **Fresh Produce**: fruits, vegetables, herbs
-- **Dairy**: milk, cheese, yogurt, eggs
-- **Bakery**: bread, pastries, baked goods
-- **Meat & Seafood**: beef, chicken, fish, seafood
-- **Pantry Staples**: canned goods, pasta, rice, beans
-- **Beverages**: juices, sodas, water, coffee, tea
-- **Household**: cleaning supplies, paper products
-- **Personal Care**: toiletries, medications
-
-### How to Stop Adding Items
-
-- **Button Control**: Click the "Stop Adding" button to finish your list
-- **Fast Response**: Microphone stops within 3 seconds maximum
-- **Visual Feedback**: Button changes from red to blue when stopped
-- **Clean Operation**: No voice commands needed - just use the button
+- **Save Lists**: Completed lists automatically saved to history
+- **Load Lists**: Reload any previous list from history
+- **Delete Lists**: Remove individual lists from history
+- **Clear History**: Remove all saved lists at once
 
 ## 🤝 Contributing
 
@@ -166,8 +161,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/your-username/voice-shopper.git
-cd voice-shopper
+git clone https://github.com/your-username/grocerli.git
+cd grocerli
 
 # Install dependencies
 npm install
@@ -188,7 +183,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built with [Lovable](https://lovable.dev) for rapid prototyping
 - UI components from [shadcn/ui](https://ui.shadcn.com/)
 - Icons from [Lucide React](https://lucide.dev/)
-- Speech recognition powered by Web Speech API
 
 ## 🆘 Support
 
