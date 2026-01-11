@@ -1,33 +1,68 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ShoppingList, type ShoppingItem } from './ShoppingList';
 import { HistoryTab } from './HistoryTab';
+import { RecipeTab } from './RecipeTab';
+import { RecipeDetail } from './RecipeDetail';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { ArrowLeft } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ArrowLeft, Edit2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn, generateId } from '@/lib/utils';
 import { isValidGroceryItem, findBestMatch } from '@/data/groceryItems';
-import { saveCurrentList, loadCurrentList, saveHistory, loadHistory } from '@/lib/storage';
+import { saveCurrentList, loadCurrentList, saveHistory, loadHistory, saveRecipe, loadRecipes, deleteRecipe } from '@/lib/storage';
 import { type SavedList } from '@/types/shopping';
+import { type RecipeIngredient, type SavedRecipe } from '@/types/recipe';
+
+// Unit options for quantity selection
+const UNIT_OPTIONS = [
+  { value: 'none', label: 'Unit' },
+  { value: 'whole', label: 'Whole' },
+  { value: 'lbs', label: 'Pounds (lbs)' },
+  { value: 'oz', label: 'Ounces (oz)' },
+  { value: 'kg', label: 'Kilograms (kg)' },
+  { value: 'g', label: 'Grams (g)' },
+  { value: 'pkg', label: 'Package (pkg)' },
+  { value: 'pcs', label: 'Pieces (pcs)' },
+  { value: 'cups', label: 'Cups' },
+  { value: 'tbsp', label: 'Tablespoons' },
+  { value: 'tsp', label: 'Teaspoons' },
+  { value: 'ml', label: 'Milliliters (ml)' },
+  { value: 'l', label: 'Liters (l)' },
+  { value: 'dozen', label: 'Dozen' },
+  { value: 'large', label: 'Large' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'small', label: 'Small' },
+  { value: 'cloves', label: 'Cloves' },
+  { value: 'piece', label: 'Piece' },
+  { value: 'garnish', label: 'Garnish' },
+  { value: 'serving', label: 'Serving' },
+];
 
 type ViewMode = 'editing' | 'shopping';
 
 export const GroceryApp: React.FC = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [history, setHistory] = useState<SavedList[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('editing');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [textInput, setTextInput] = useState('');
+  const [itemQuantity, setItemQuantity] = useState('');
+  const [itemUnit, setItemUnit] = useState<string>('none');
   const [activeTab, setActiveTab] = useState('make-list');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editUnit, setEditUnit] = useState<string>('');
+  const [selectedRecipe, setSelectedRecipe] = useState<SavedRecipe | null>(null);
   const { toast } = useToast();
   const completionProcessedRef = useRef(false);
 
-  // Load current list and history from localStorage on component mount
+  // Load current list, history, and saved recipes from localStorage on component mount
   useEffect(() => {
     const savedList = loadCurrentList();
     if (savedList && savedList.length > 0) {
@@ -37,6 +72,11 @@ export const GroceryApp: React.FC = () => {
     const savedHistory = loadHistory();
     if (savedHistory && savedHistory.length > 0) {
       setHistory(savedHistory);
+    }
+
+    const recipes = loadRecipes();
+    if (recipes && recipes.length > 0) {
+      setSavedRecipes(recipes);
     }
   }, []);
 
@@ -227,7 +267,7 @@ export const GroceryApp: React.FC = () => {
         // Try to find best match in database, otherwise use the item name as-is
         const bestMatch = findBestMatch(finalName);
         const displayName = bestMatch || finalName;
-        
+
         return {
           id: Math.random().toString(36).substr(2, 9),
           name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
@@ -305,11 +345,120 @@ export const GroceryApp: React.FC = () => {
 
 
   const handleTextInputSubmit = useCallback(() => {
-    if (textInput.trim()) {
-      addRawItem(textInput.trim());
-      setTextInput('');
+    const itemName = textInput.trim();
+    const qtyValue = itemQuantity.trim();
+    const unitValue = itemUnit.trim();
+    
+    if (!itemName) return;
+    
+    // Find best match in database
+    const bestMatch = findBestMatch(itemName);
+    const displayName = bestMatch || itemName;
+    
+    // Check for duplicate (case-insensitive)
+    const isDuplicate = items.some(item =>
+      item.name.toLowerCase() === displayName.toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      toast({
+        title: "Item Already Exists",
+        description: `"${displayName}" is already in your list.`,
+        variant: "destructive",
+      });
+      return;
     }
-  }, [textInput, addRawItem]);
+    
+    // Convert quantity to number if provided
+    let numericQuantity: number | undefined = undefined;
+    if (qtyValue) {
+      const parsed = parseFloat(qtyValue);
+      if (!isNaN(parsed)) {
+        numericQuantity = parsed;
+      }
+    }
+    
+    // Handle unit (empty string or "none" means undefined)
+    const finalUnit = unitValue && unitValue !== 'none' ? unitValue : undefined;
+    
+    // Create new item
+    const newItem: ShoppingItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+      completed: false,
+      quantity: numericQuantity || undefined,
+      unit: finalUnit,
+    };
+    
+    // Add to list
+    setItems(prev => [...prev, newItem]);
+    
+    // Show success toast
+    toast({
+      title: "Item Added",
+      description: numericQuantity
+        ? `${numericQuantity}${finalUnit ? ` ${finalUnit} ` : ' '}${displayName}`
+        : displayName,
+    });
+    
+    // Clear inputs
+    setTextInput('');
+    setItemQuantity('');
+    setItemUnit('none');
+  }, [textInput, itemQuantity, itemUnit, items, toast]);
+
+  // Handler for adding recipe ingredients to shopping list
+  const handleAddRecipeIngredients = useCallback((ingredients: RecipeIngredient[]) => {
+    const newItems: ShoppingItem[] = ingredients
+      .map(ingredient => {
+        // Use the ingredient name directly from recipe data
+        const finalName = ingredient.name;
+        const bestMatch = findBestMatch(finalName);
+        const displayName = bestMatch || finalName;
+
+        // Convert string quantity to number if possible
+        let numericQuantity: number | undefined = undefined;
+        if (ingredient.quantity) {
+          const parsed = parseFloat(ingredient.quantity);
+          if (!isNaN(parsed)) {
+            numericQuantity = parsed;
+          }
+        }
+
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+          completed: false,
+          quantity: numericQuantity || undefined,
+          unit: ingredient.unit || undefined,
+        };
+      });
+
+    setItems(prevItems => {
+      const itemsToAdd = newItems.filter(newItem =>
+        !prevItems.some(existing => existing.name.toLowerCase() === newItem.name.toLowerCase())
+      );
+
+      if (itemsToAdd.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: `Added ${itemsToAdd.length} ingredient${itemsToAdd.length > 1 ? "s" : ""}`,
+            description: itemsToAdd.map(item => {
+              if (item.quantity) {
+                return `${item.quantity}${item.unit ? ` ${item.unit} ` : ' '}${item.name}`;
+              }
+              return item.name;
+            }).join(", "),
+          });
+        }, 0);
+      }
+
+      return [...prevItems, ...itemsToAdd];
+    });
+
+    // Switch to shopping list tab
+    setActiveTab('make-list');
+  }, [toast]);
 
   const handleToggleItem = (id: string) => {
     setItems(prev => {
@@ -326,11 +475,13 @@ export const GroceryApp: React.FC = () => {
   };
 
   // Handle editing an item
-  const handleEditItem = useCallback((id: string, newName: string) => {
+  const handleEditItem = useCallback((id: string, newName: string, newQuantity?: string, newUnit?: string) => {
     // If this is the first click on an item, enter edit mode
     if (editingItemId === null || editingItemId !== id) {
       setEditingItemId(id);
       setEditValue(newName);
+      setEditQuantity(newQuantity || '');
+      setEditUnit(newUnit || 'none');
       return;
     }
 
@@ -362,14 +513,30 @@ export const GroceryApp: React.FC = () => {
       return;
     }
 
-    // Update item name
+    // Parse quantity
+    let numericQuantity: number | undefined = undefined;
+    if (newQuantity && newQuantity.trim()) {
+      const parsed = parseFloat(newQuantity.trim());
+      if (!isNaN(parsed)) {
+        numericQuantity = parsed;
+      }
+    }
+
+    // Handle unit (empty string or "none" means undefined)
+    const finalUnit = newUnit && newUnit.trim() && newUnit !== 'none' ? newUnit.trim() : undefined;
+
+    // Update item
     setItems(prev => prev.map(item =>
-      item.id === id ? { ...item, name: displayName } : item
+      item.id === id
+        ? { ...item, name: displayName, quantity: numericQuantity, unit: finalUnit }
+        : item
     ));
 
     // Exit edit mode
     setEditingItemId(null);
     setEditValue('');
+    setEditQuantity('');
+    setEditUnit('');
 
     toast({
       title: "Item Updated",
@@ -381,6 +548,8 @@ export const GroceryApp: React.FC = () => {
   const handleCancelEdit = useCallback(() => {
     setEditingItemId(null);
     setEditValue('');
+    setEditQuantity('');
+    setEditUnit('none');
   }, []);
 
   const handleClearList = () => {
@@ -402,7 +571,7 @@ export const GroceryApp: React.FC = () => {
     // Switch to shopping mode (list is already auto-saved to current storage)
     setViewMode('shopping');
     setActiveTab('make-list');
-    
+
     toast({
       title: "Ready to Shop!",
       description: "Your list is ready. Check off items as you shop.",
@@ -416,10 +585,10 @@ export const GroceryApp: React.FC = () => {
   // Handle completion celebration
   useEffect(() => {
     const allCompleted = items.length > 0 && items.every(item => item.completed);
-
+    
     if (allCompleted && viewMode === 'shopping' && !completionProcessedRef.current) {
       completionProcessedRef.current = true;
-
+      
       setTimeout(() => {
         playSuccessSound();
         
@@ -437,14 +606,14 @@ export const GroceryApp: React.FC = () => {
           title: "🎉 Shopping Complete!",
           description: "Congratulations! Your list has been saved to history.",
         });
-
+        
         setTimeout(() => {
           toast({
             title: "🎊 Well Done! 🎊",
             description: "You've successfully completed your shopping list!",
             duration: 5000,
           });
-
+          
           setTimeout(() => {
             setItems([]);
             setViewMode('editing');
@@ -453,12 +622,12 @@ export const GroceryApp: React.FC = () => {
         }, 1000);
       }, 0);
     }
-  }, [items, viewMode]);
+  }, [items, viewMode, toast]);
 
   // Play success sound
   const playSuccessSound = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioContext = new AudioContextClass();
 
       const playNote = (frequency: number, startTime: number, duration: number) => {
@@ -534,6 +703,51 @@ export const GroceryApp: React.FC = () => {
     });
   };
 
+  // Handle saving a recipe
+  const handleSaveRecipe = useCallback((recipe: SavedRecipe) => {
+    const existingIndex = savedRecipes.findIndex(r => r.id === recipe.id);
+    if (existingIndex >= 0) {
+      toast({
+        title: "Already Saved",
+        description: "This recipe is already in your saved recipes.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    saveRecipe(recipe);
+    setSavedRecipes(prev => [recipe, ...prev]);
+    toast({
+      title: "Recipe Saved",
+      description: `"${recipe.name}" has been saved to your recipes.`,
+    });
+  }, [savedRecipes, toast]);
+
+  // Handle viewing a saved recipe
+  const handleViewRecipe = useCallback((recipe: SavedRecipe) => {
+    setSelectedRecipe(recipe);
+    setActiveTab('recipes');
+  }, []);
+
+  // Handle adding saved recipe ingredients to shopping list
+  const handleAddRecipeToShoppingList = useCallback((recipe: SavedRecipe) => {
+    handleAddRecipeIngredients(recipe.ingredients);
+    toast({
+      title: "Added to List",
+      description: `Added ${recipe.ingredients.length} ingredients from "${recipe.name}" to your shopping list.`
+    });
+  }, [handleAddRecipeIngredients, toast]);
+
+  // Handle deleting a saved recipe
+  const handleDeleteRecipe = useCallback((recipeId: string) => {
+    deleteRecipe(recipeId);
+    setSavedRecipes(prev => prev.filter(r => r.id !== recipeId));
+    toast({
+      title: "Recipe Deleted",
+      description: "Recipe has been removed from your saved recipes.",
+    });
+  }, [toast]);
+
   const completedCount = items.filter(item => item.completed).length;
   const progressPercent = items.length > 0 ? (completedCount / items.length) * 100 : 0;
 
@@ -549,9 +763,12 @@ export const GroceryApp: React.FC = () => {
 
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4 md:mb-6 h-12 md:h-auto">
+          <TabsList className="grid w-full grid-cols-3 mb-4 md:mb-6 h-12 md:h-auto">
             <TabsTrigger value="make-list" className="rounded-xl min-h-[44px] md:min-h-0 text-sm md:text-base">
               Make a List
+            </TabsTrigger>
+            <TabsTrigger value="recipes" className="rounded-xl min-h-[44px] md:min-h-0 text-sm md:text-base">
+              Recipes
             </TabsTrigger>
             <TabsTrigger value="history" className="rounded-xl min-h-[44px] md:min-h-0 text-sm md:text-base">
               History
@@ -574,11 +791,11 @@ export const GroceryApp: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Input Field */}
-                <div className="relative">
+                {/* Input Fields */}
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     type="text"
-                    placeholder="Type items..."
+                    placeholder="Item name..."
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -586,8 +803,46 @@ export const GroceryApp: React.FC = () => {
                         handleTextInputSubmit();
                       }
                     }}
-                    className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                    className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 flex-1 [&::placeholder]:text-gray-500"
                   />
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={itemQuantity}
+                      onChange={(e) => setItemQuantity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTextInputSubmit();
+                        }
+                      }}
+                      min="0"
+                      step="0.5"
+                      className="h-12 md:h-14 w-24 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 [&::placeholder]:text-gray-500"
+                    />
+                    <Select
+                      value={itemUnit}
+                      onValueChange={setItemUnit}
+                    >
+                      <SelectTrigger className="h-12 md:h-14 w-36 bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 [&_[data-placeholder]]:text-gray-500 [&_span]:text-gray-500">
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {UNIT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={handleTextInputSubmit}
+                      disabled={!textInput.trim()}
+                      className="h-12 md:h-14 px-6"
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Done Button */}
@@ -612,7 +867,11 @@ export const GroceryApp: React.FC = () => {
                   onCancelEdit={handleCancelEdit}
                   editingItemId={editingItemId}
                   editValue={editValue}
+                  editQuantity={editQuantity}
+                  editUnit={editUnit}
                   onEditValueChange={setEditValue}
+                  onEditQuantityChange={setEditQuantity}
+                  onEditUnitChange={setEditUnit}
                   viewMode="editing"
                   className="animate-slide-up"
                 />
@@ -627,20 +886,60 @@ export const GroceryApp: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Input Field - Allow adding items while shopping */}
-                <div className="relative">
-                  <Input
-                    type="text"
-                    placeholder="Add more items..."
-                    value={textInput}
-                    onChange={(e) => setTextInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleTextInputSubmit();
-                      }
-                    }}
-                    className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
-                  />
+                {/* Input Fields - Allow adding items while shopping */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1 relative">
+                    <Input
+                      type="text"
+                      placeholder="Item name..."
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTextInputSubmit();
+                        }
+                      }}
+                      className="h-12 md:h-14 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 [&::placeholder]:text-gray-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={itemQuantity}
+                      onChange={(e) => setItemQuantity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTextInputSubmit();
+                        }
+                      }}
+                      min="0"
+                      step="0.5"
+                      className="h-12 md:h-14 w-24 text-base bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 [&::placeholder]:text-gray-500"
+                    />
+                    <Select
+                      value={itemUnit}
+                      onValueChange={setItemUnit}
+                    >
+                      <SelectTrigger className="h-12 md:h-14 w-36 bg-gray-100 border-2 border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400 [&_[data-placeholder]]:text-gray-500 [&_span]:text-gray-500">
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {UNIT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={handleTextInputSubmit}
+                      disabled={!textInput.trim()}
+                      className="h-12 md:h-14 px-6"
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Progress Bar */}
@@ -672,7 +971,11 @@ export const GroceryApp: React.FC = () => {
                   onCancelEdit={handleCancelEdit}
                   editingItemId={editingItemId}
                   editValue={editValue}
+                  editQuantity={editQuantity}
+                  editUnit={editUnit}
                   onEditValueChange={setEditValue}
+                  onEditQuantityChange={setEditQuantity}
+                  onEditUnitChange={setEditUnit}
                   viewMode="shopping"
                   className="animate-slide-up"
                 />
@@ -693,13 +996,43 @@ export const GroceryApp: React.FC = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="recipes" className="mt-0">
+            {/* Recipe Tab */}
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-lg md:text-xl font-semibold text-muted-foreground">
+                  AI-Powered Recipes
+                </p>
+              </div>
+              {selectedRecipe ? (
+                <RecipeDetail
+                  recipe={selectedRecipe}
+                  onBack={() => setSelectedRecipe(null)}
+                  onAddToShoppingList={handleAddRecipeIngredients}
+                  onSaveRecipe={() => handleSaveRecipe(selectedRecipe)}
+                  isSaved={savedRecipes.some(r => r.id === selectedRecipe.id)}
+                />
+              ) : (
+                <RecipeTab
+                  onAddIngredients={handleAddRecipeIngredients}
+                  onSaveRecipe={handleSaveRecipe}
+                  isRecipeSaved={(recipeId) => savedRecipes.some(r => r.id === recipeId)}
+                />
+              )}
+            </div>
+          </TabsContent>
+
           <TabsContent value="history" className="mt-0">
             {/* History Tab */}
             <HistoryTab
               history={history}
+              savedRecipes={savedRecipes}
               onLoadList={loadFromHistory}
               onClearHistory={clearHistory}
               onDeleteList={deleteList}
+              onViewRecipe={handleViewRecipe}
+              onAddRecipeToShoppingList={handleAddRecipeToShoppingList}
+              onDeleteRecipe={handleDeleteRecipe}
             />
           </TabsContent>
         </Tabs>

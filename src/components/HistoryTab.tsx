@@ -4,19 +4,29 @@ import { Card } from './ui/card';
 import { Trash2, Clock, ShoppingBag } from 'lucide-react';
 import { type ShoppingItem } from './ShoppingList';
 import { type SavedList } from '@/types/shopping';
+import { type SavedRecipe } from '@/types/recipe';
+import { SavedRecipesCard } from './SavedRecipesCard';
 
 interface HistoryTabProps {
   history: SavedList[];
+  savedRecipes: SavedRecipe[];
   onLoadList: (listId: string) => void;
   onClearHistory: () => void;
   onDeleteList: (listId: string) => void;
+  onViewRecipe: (recipe: SavedRecipe) => void;
+  onAddRecipeToShoppingList: (recipe: SavedRecipe) => void;
+  onDeleteRecipe: (recipeId: string) => void;
 }
 
 export const HistoryTab: React.FC<HistoryTabProps> = ({
   history,
+  savedRecipes,
   onLoadList,
   onClearHistory,
   onDeleteList,
+  onViewRecipe,
+  onAddRecipeToShoppingList,
+  onDeleteRecipe,
 }) => {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -41,7 +51,8 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
   };
 
   return (
-    <Card className="p-4 md:p-6 lg:p-8 shadow-card rounded-xl md:rounded-2xl border-0 bg-white/80 backdrop-blur-sm">
+    <div className="space-y-4">
+      <Card className="p-4 md:p-6 lg:p-8 shadow-card rounded-xl md:rounded-2xl border-0 bg-white/80 backdrop-blur-sm">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 md:mb-6">
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-5 h-5 text-primary" />
@@ -119,6 +130,15 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({
           ))}
         </div>
       )}
-    </Card>
+      </Card>
+
+      {/* Saved Recipes Section */}
+      <SavedRecipesCard
+        savedRecipes={savedRecipes}
+        onViewRecipe={onViewRecipe}
+        onAddToShoppingList={onAddRecipeToShoppingList}
+        onDeleteRecipe={onDeleteRecipe}
+      />
+    </div>
   );
 };

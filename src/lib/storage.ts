@@ -1,9 +1,11 @@
 import { type ShoppingItem } from '@/components/ShoppingList';
 import { type SavedList } from '@/types/shopping';
+import { type SavedRecipe } from '@/types/recipe';
 
 const STORAGE_KEYS = {
   CURRENT_LIST: 'voice-shopper-current-list',
   HISTORY: 'voice-shopper-history',
+  SAVED_RECIPES: 'voice-shopper-saved-recipes',
 } as const;
 
 /**
@@ -79,12 +81,54 @@ export const loadHistory = (): SavedList[] | null => {
 };
 
 /**
+ * Save a recipe to localStorage
+ */
+export const saveRecipe = (recipe: SavedRecipe): void => {
+  try {
+    const existing = loadRecipes();
+    const updated = [recipe, ...existing].slice(0, 10); // Keep max 10 recipes
+    localStorage.setItem(STORAGE_KEYS.SAVED_RECIPES, JSON.stringify(updated));
+  } catch (error) {
+    console.error('Failed to save recipe to localStorage:', error);
+  }
+};
+
+/**
+ * Load all saved recipes from localStorage
+ */
+export const loadRecipes = (): SavedRecipe[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.SAVED_RECIPES);
+    if (stored) {
+      return JSON.parse(stored) as SavedRecipe[];
+    }
+  } catch (error) {
+    console.error('Failed to load recipes from localStorage:', error);
+  }
+  return [];
+};
+
+/**
+ * Delete a specific recipe from localStorage
+ */
+export const deleteRecipe = (recipeId: string): void => {
+  try {
+    const existing = loadRecipes();
+    const updated = existing.filter(recipe => recipe.id !== recipeId);
+    localStorage.setItem(STORAGE_KEYS.SAVED_RECIPES, JSON.stringify(updated));
+  } catch (error) {
+    console.error('Failed to delete recipe from localStorage:', error);
+  }
+};
+
+/**
  * Clear all stored data from localStorage
  */
 export const clearStorage = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_LIST);
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    localStorage.removeItem(STORAGE_KEYS.SAVED_RECIPES);
   } catch (error) {
     console.error('Failed to clear localStorage:', error);
   }
