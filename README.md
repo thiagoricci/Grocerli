@@ -1,59 +1,65 @@
-# 🛒 SousChefy - Smart Grocery Shopping Assistant
+# 🛒 SousChefy - AI-Powered Voice-Controlled Grocery Shopping Assistant
 
-A modern grocery shopping application that helps you create and manage shopping lists with ease. Add items manually, discover AI-powered recipes, and enjoy a seamless shopping experience!
+A revolutionary grocery shopping application that transforms how you create and manage shopping lists using voice commands. SousChefy leverages modern browser-native speech recognition and AI to provide a hands-free, intuitive shopping experience.
 
 ![SousChefy Demo](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=SousChefy+Demo)
 
 ## ✨ Key Features
 
-### 🎯 **Easy Item Management**
+### 🎤 **Voice-Controlled Shopping**
 
-- **Simple Interface**: Type items directly into the input field
-- **Quick Entry**: Press Enter to add items instantly
-- **Quantity & Unit Support**: Specify amounts with flexible unit options (lbs, oz, kg, cups, etc.)
-- **Smart Parsing**: Automatically extracts quantities from your input
-- **Duplicate Detection**: Prevents adding the same item twice
-- **Edit Items**: Click any item to modify its name, quantity, or unit
+- **Natural Language Input**: Speak naturally as you would to another person - "I need apples, bananas, milk, and bread"
+- **Smart Speech Recognition**: Browser-native Web Speech API with no API keys required
+- **Dual-Mode Operation**: Separate "Adding" mode for list creation and "Shopping" mode for hands-free item check-off
+- **Quantity Parsing**: Handles both numeric quantities ("2 apples") and word quantities ("a dozen eggs", "three bananas")
+- **Multi-Item Recognition**: Intelligently parses multiple items from a single speech input using natural separators
+- **Grocery Database**: Comprehensive database of 200+ items across 14 categories with fuzzy matching
 
-### 🍳 **AI-Powered Recipes**
+### 🤖 **ChefAI - Your Personal Shopping Assistant**
 
-- **Recipe Discovery**: Generate recipes based on ingredients you have
-- **Save Recipes**: Keep your favorite recipes for quick access
-- **Add Ingredients**: One-click to add all recipe ingredients to your shopping list
-- **Recipe Details**: View complete recipes with ingredients and instructions
-- **OpenAI Integration**: Powered by GPT for intelligent recipe suggestions
+- **Voice & Text Input**: Interact with ChefAI using voice commands or text input
+- **Smart List Management**: Tell ChefAI what you need and it adds items to your shopping list automatically
+- **AI-Powered Recipe Generation**: Generate recipes by dish name or get recommendations based on ingredients
+- **Recipe Saving**: Ask ChefAI to save any recipe it generates directly to your collection
+- **Shopping History Access**: ChefAI can reference your past shopping lists for personalized recommendations
+- **Streaming Responses**: Real-time feedback as ChefAI processes your requests
+- **One-Sentence Responses**: Clean, concise answers with automatic tab routing
+- **Tab-Based Routing**: ChefAI automatically switches to the appropriate tab (Home, Recipes, Cooking, Favorites)
 
-### 🛒 **Dual-Mode Operation**
+### 🍳 **Recipe Management**
 
-- **Editing Mode**: Create and manage your shopping list
-- **Shopping Mode**: Check off items as you shop with progress tracking
-- **Flexible Editing**: Edit item names, quantities, or remove items anytime
-- **Add While Shopping**: Continue adding items even in shopping mode
-
-### 🎉 **Enhanced User Experience**
-
-- **Celebration System**: Audio celebration when shopping list is completed
-- **Visual Feedback**: Smooth animations and real-time updates
-- **Progress Tracking**: Live completion counter and percentage display
-- **History Management**: Save and reload previous shopping lists (up to 10 lists)
-- **Local Storage**: Your lists and recipes persist between sessions
+- **Recipe Generation by Dish**: Get complete recipes by dish name with ingredients, instructions, prep time, cook time, servings, and difficulty
+- **Ingredient-Based Recommendations**: Get 5 recipe suggestions based on ingredients you have
+- **Recipe Details View**: View complete recipes with step-by-step instructions
+- **Save to Collection**: Save your favorite recipes for quick access
+- **Add Ingredients to List**: One-click to add all recipe ingredients to your shopping list
+- **Cooking Mode**: Follow recipes with step-by-step instructions and built-in timers
 
 ### 📱 **Modern Interface & PWA**
 
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Beautiful Animations**: Smooth transitions and micro-interactions
 - **Accessibility**: Full keyboard navigation and screen reader support
-- **Clean UI**: Streamlined interface with no unnecessary visual clutter
 - **Progressive Web App**: Install on your device for offline access
 - **Mobile-First**: Optimized touch interactions and mobile layouts
+- **Inline Chat Panel**: Collapsible chat interface for seamless ChefAI interaction
+
+### 🔐 **Authentication & Data Persistence**
+
+- **User Accounts**: Create accounts to save your data across devices
+- **Secure Authentication**: JWT-based authentication system
+- **Cloud Storage**: Shopping lists and recipes saved to PostgreSQL database
+- **History Management**: Save and reload previous shopping lists
+- **Offline Support**: PWA capabilities with service worker caching
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Modern web browser
-- OpenAI API key (for recipe features)
+- Modern web browser (Chrome, Safari, Edge)
+- PostgreSQL database (for backend features)
+- OpenAI API key (for ChefAI features)
 
 ### Installation
 
@@ -64,13 +70,21 @@ A modern grocery shopping application that helps you create and manage shopping 
    cd Grocerli
    ```
 
-2. **Install dependencies**
+2. **Install frontend dependencies**
 
    ```bash
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Install backend dependencies**
+
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+
+4. **Set up environment variables**
 
    Create a `.env` file in the root directory:
 
@@ -78,78 +92,102 @@ A modern grocery shopping application that helps you create and manage shopping 
    VITE_OPENAI_API_KEY=your_openai_api_key_here
    ```
 
-   Or copy from the example:
+   Create a `.env` file in the `backend` directory:
+
+   ```env
+   DATABASE_URL=postgresql://user:password@localhost:5432/souschefy
+   JWT_SECRET=your_jwt_secret_here
+   ```
+
+   Or copy from the examples:
 
    ```bash
    cp .env.example .env
    # Edit .env and add your OpenAI API key
+
+   cp backend/.env.example backend/.env
+   # Edit backend/.env with your database credentials
    ```
 
-4. **Start development server**
+5. **Set up the database**
+
+   ```bash
+   cd backend
+   npx prisma migrate dev
+   cd ..
+   ```
+
+6. **Start the development servers**
+
+   Terminal 1 - Frontend:
 
    ```bash
    npm run dev
    ```
 
-5. **Open your browser**
+   Terminal 2 - Backend:
+
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+7. **Open your browser**
    Navigate to `http://localhost:8080`
 
 ## 📋 Usage Guide
 
-### Getting Started
+### Getting Started with Voice
 
-1. **Add Items**: Type items in the input field and press Enter
-2. **Specify Quantity & Unit**: Use the quantity and unit fields for precise measurements
-3. **Edit List**: Click on any item to edit its name, quantity, or unit
-4. **Remove Items**: Click the delete button to remove items
-5. **Start Shopping**: Click "Start Shopping" when your list is ready
-6. **Check Off Items**: Click items to mark them as completed
+1. **Add Items**: Click "Add Items" button and speak naturally
+2. **Specify Quantities**: Say "2 apples", "a dozen eggs", "three bananas"
+3. **Use Natural Separators**: "and", "also", "plus" work seamlessly
+4. **Stop Adding**: Click "Stop Adding" when finished
+5. **Start Shopping**: Click "Start Shopping" to begin hands-free shopping
+6. **Check Off Items**: Speak item names to check them off your list
 7. **Complete**: Enjoy the celebration when your list is done!
+
+### Using ChefAI
+
+1. **Open Chat Panel**: Click the green chat bubble in the top-right corner
+2. **Voice or Text**: Use voice input or type your request
+3. **Common Commands**:
+   - "I need milk, eggs, and bread" - Adds items to your list
+   - "What can I cook?" - Shows 5 recipe suggestions
+   - "Give me a lasagna recipe" - Generates and saves a complete recipe
+   - "Show my history" - Displays your shopping history
+   - "Save this recipe" - Saves the current recipe to your collection
 
 ### Using Recipes
 
 1. **Navigate to Recipes Tab**: Click on "Recipes" in the navigation
-2. **Generate Recipe**: Enter ingredients you have and let AI suggest recipes
+2. **Generate Recipe**: Enter a dish name or ingredients
 3. **View Details**: Click on a recipe to see full instructions
 4. **Save Recipe**: Save your favorite recipes for quick access
 5. **Add to List**: One-click to add all recipe ingredients to your shopping list
+6. **Cooking Mode**: Follow recipes with step-by-step instructions
 
 ### Managing History
 
-1. **Navigate to History Tab**: Click on "History" in the navigation
+1. **Navigate to Favorites Tab**: Click on "Favorites" in the navigation
 2. **Load List**: Click on any saved list to reload it
 3. **Delete List**: Remove individual lists you no longer need
-4. **Clear History**: Remove all saved lists at once
+4. **View Recipes**: Access your saved recipes
+
+### Keyboard Shortcuts
+
+- **A** - Start adding items
+- **S** - Start shopping
+- **Escape** - Stop current action
 
 ### Tips for Best Results
 
-- **Type clearly** and press Enter to add items
-- **Include quantities** naturally: "2 apples", "a dozen eggs"
-- **Use units**: Select appropriate units (lbs, cups, pieces, etc.)
+- **Speak clearly** and naturally
 - **Use compound words**: "peanut butter", "orange juice"
-- **Edit items** by clicking on them to correct mistakes
-- **Save time** by using the history tab to reload previous lists
-- **Discover recipes** based on ingredients you have at home
-
-### Supported Item Types
-
-- **Fresh Produce**: fruits, vegetables, herbs
-- **Dairy**: milk, cheese, yogurt, eggs
-- **Bakery**: bread, pastries, baked goods
-- **Meat & Seafood**: beef, chicken, fish, seafood
-- **Pantry Staples**: canned goods, pasta, rice, beans
-- **Beverages**: juices, sodas, water, coffee, tea
-- **Household**: cleaning supplies, paper products
-- **Personal Care**: toiletries, medications
-
-### Shopping List Features
-
-- **Editing Mode**: Create and modify your shopping list
-- **Shopping Mode**: Check off items with progress tracking
-- **Item Management**: Edit names, quantities, units, or remove items
-- **History**: Save up to 10 completed shopping lists
-- **Persistence**: Lists and recipes automatically saved to local storage
-- **Recipe Integration**: Add ingredients directly from saved recipes
+- **Specify quantities**: "2 apples", "a dozen eggs"
+- **Use natural separators**: "and", "also", "plus"
+- **Ask ChefAI** for recipe ideas based on ingredients
+- **Use cooking mode** for step-by-step recipe following
 
 ## 🏗️ Technical Architecture
 
@@ -161,66 +199,91 @@ A modern grocery shopping application that helps you create and manage shopping 
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework for rapid UI development
 - **shadcn/ui** - High-quality, accessible component library built on Radix UI
 - **Lucide React 0.462.0** - Beautiful icon library
+- **React Router DOM 6.30.1** - Client-side routing
+- **TanStack Query 5.83.0** - Data fetching and caching
+
+### Backend Stack
+
+- **Express.js** - RESTful API server
+- **Prisma ORM** - Database ORM for PostgreSQL
+- **PostgreSQL** - Relational database for data persistence
+- **JWT Authentication** - Secure user authentication
+- **TypeScript** - Type-safe backend development
 
 ### Core Technologies
 
-- **React Hooks** - useState, useEffect, useCallback for state management
-- **React Router DOM 6.30.1** - Client-side routing
-- **TanStack Query 5.83.0** - Data fetching and caching
-- **Local Storage** - Persistent shopping list and recipe history
+- **Web Speech API** - Browser-native speech recognition
 - **Web Audio API** - Celebration sound effects
-- **OpenAI API** - AI-powered recipe generation
-- **Vite PWA Plugin 1.2.0** - Progressive Web App support
+- **OpenAI API** - GPT-4o-mini for ChefAI
+- **Vite PWA Plugin** - Progressive Web App support
+- **React Hooks** - useState, useEffect, useCallback for state management
 
 ### Performance Optimizations
 
-- **Debounced Processing** - Optimized input handling
+- **Debounced Processing** - Optimized input handling (500ms debounce)
 - **Mobile-First** - Responsive design with mobile optimizations
 - **Efficient Rendering** - Optimized component updates
 - **Clean State Management** - Proper cleanup prevents memory leaks
+- **Aggressive Microphone Cleanup** - Multiple stop mechanisms for reliable mobile operation
 - **Service Worker Caching** - Offline support and fast loading
 
 ## 🎨 Features in Detail
 
-### Text Input System
+### Voice Recognition System
 
-- **Quantity Extraction**: Automatically detects numeric and word-based quantities
-- **Smart Parsing**: Handles "2 apples", "a dozen eggs", "three bananas"
-- **Unit Selection**: Choose from 20+ unit options (lbs, oz, kg, cups, tbsp, etc.)
-- **Duplicate Prevention**: Warns when trying to add existing items
-- **Quick Entry**: Press Enter to add items instantly
+- **Natural Language Processing**: Supports conversational patterns with filler words
+- **Smart Separators**: Recognizes "and", "also", "plus", "then", commas, and pauses
+- **Quantity Extraction**: Parses numeric and word-based quantities with optional units
+- **Compound Item Recognition**: Handles multi-word items like "peanut butter", "orange juice"
+- **Grocery Database**: Comprehensive database of 200+ items across 14 categories
+- **Fuzzy Matching**: Finds best matches for spoken items to ensure consistency
+- **Mobile Optimization**: Special handling for mobile browser quirks
 
-### Shopping List Management
+### ChefAI Capabilities
 
+- **List Management**: Add or remove items from shopping lists
+- **Recipe Generation**: Generate recipes by dish name or ingredients
+- **Recipe Saving**: Save recipes directly from conversations
+- **History Access**: Reference past shopping lists for personalized recommendations
+- **Tab Routing**: Automatically switches to appropriate tabs based on request type
+- **Streaming Responses**: Real-time feedback as ChefAI processes requests
+- **Voice Input**: Web Speech API integration for voice commands
+- **Auto-Send on Silence**: Automatically sends after 3 seconds of no speech
+
+### Shopping List Features
+
+- **Category Organization**: Items automatically grouped by category with emojis
+- **Progress Tracking**: Visual progress bar shows completion status
 - **Edit Items**: Click on any item to modify its name, quantity, or unit
 - **Remove Items**: Delete items you no longer need
-- **Progress Tracking**: Visual progress bar shows completion status
-- **Auto-Save**: Lists automatically saved to local storage
-- **Unique List IDs**: Each list has a unique identifier for proper editing
+- **History**: Save completed lists to history
+- **Persistence**: Lists automatically saved to database (for authenticated users)
+- **Recipe Integration**: Add ingredients directly from saved recipes
 
-### AI-Powered Recipes
+### Recipe Management
 
-- **Recipe Generation**: Get recipe suggestions based on ingredients you have
-- **Recipe Details**: View complete recipes with ingredients and instructions
+- **Recipe Generation**: Get recipes by dish name or ingredient recommendations
+- **Recipe Details**: View complete recipes with ingredients, instructions, prep time, cook time, servings, and difficulty
 - **Save Favorites**: Keep your favorite recipes for quick access
 - **Add to List**: One-click to add all recipe ingredients to shopping list
-- **OpenAI Integration**: Powered by GPT for intelligent suggestions
-
-### History System
-
-- **Save Lists**: Completed lists automatically saved to history
-- **Load Lists**: Reload any previous list from history
-- **Delete Lists**: Remove individual lists from history
-- **Clear History**: Remove all saved lists at once
-- **Timestamp Tracking**: See when lists were created and last modified
+- **Cooking Mode**: Follow recipes with step-by-step instructions and built-in timers
+- **External Recipes**: Display recipes from ChefAI with clear source indicators
 
 ### PWA Features
 
 - **Installable**: Add to home screen on iOS and Android
-- **Offline Support**: Works without internet connection (except recipe generation)
+- **Offline Support**: Works without internet connection (except ChefAI features)
 - **Splash Screens**: Custom splash screens for iOS devices
 - **Service Worker**: Automatic caching for fast loading
 - **App Icon**: Custom app icon for home screen
+
+## 🔒 Authentication & Security
+
+- **User Registration**: Create accounts with email and password
+- **Secure Login**: JWT-based authentication
+- **Protected Routes**: API endpoints require valid authentication
+- **User-Specific Data**: All data operations are filtered by userId
+- **Password Hashing**: Secure password storage with bcrypt
 
 ## 🤝 Contributing
 
@@ -233,27 +296,34 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 git clone https://github.com/your-username/grocerli.git
 cd Grocerli
 
-# Install dependencies
+# Install frontend dependencies
 npm install
+
+# Install backend dependencies
+cd backend
+npm install
+cd ..
 
 # Set up environment variables
 cp .env.example .env
 # Edit .env and add your OpenAI API key
 
-# Start development server
-npm run dev
+cp backend/.env.example backend/.env
+# Edit backend/.env with your database credentials
 
-# Run linting
-npm run lint
+# Set up the database
+cd backend
+npx prisma migrate dev
+cd ..
 
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+# Start development servers
+npm run dev                    # Frontend (Terminal 1)
+cd backend && npm run dev      # Backend (Terminal 2)
 ```
 
 ### Available Scripts
+
+**Frontend:**
 
 - `npm run dev` - Start development server on port 8080
 - `npm run build` - Build for production
@@ -261,17 +331,25 @@ npm run preview
 - `npm run lint` - Run ESLint
 - `npm run preview` - Preview production build
 
+**Backend:**
+
+- `npm run dev` - Start development server on port 3000
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- Built with [Lovable](https://lovable.dev) for rapid prototyping
+- Built with modern web technologies for a seamless user experience
 - UI components from [shadcn/ui](https://ui.shadcn.com/)
 - Icons from [Lucide React](https://lucide.dev/)
 - Recipe generation powered by [OpenAI](https://openai.com/)
 - PWA support via [Vite PWA Plugin](https://vite-plugin-pwa.netlify.app/)
+- Database ORM by [Prisma](https://www.prisma.io/)
 
 ## 🆘 Support
 
@@ -302,6 +380,20 @@ Having issues? Check out our [Troubleshooting Guide](TROUBLESHOOTING.md) or crea
 4. Tap "Install" to confirm
 5. Launch the app from your home screen
 
+## 🌐 Browser Compatibility
+
+### Supported Browsers
+
+- **Chrome/Edge** (full support) - Recommended for best experience
+- **Safari** (partial support) - Some features may have different behavior
+- **Firefox** (limited support) - Speech recognition not fully supported
+
+### Mobile Considerations
+
+- **iOS Safari**: Different speech recognition behavior, optimized for mobile
+- **Android Chrome**: Generally good support
+- **Requires HTTPS**: Speech API requires secure context
+
 ---
 
-**Made with ❤️ for smarter grocery shopping**
+**Made with ❤️ for smarter, voice-controlled grocery shopping**
