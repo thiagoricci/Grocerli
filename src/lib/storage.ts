@@ -9,6 +9,16 @@ const STORAGE_KEYS = {
   AUTH_TOKEN: 'voice-shopper-auth-token',
 } as const;
 
+/**
+ * Normalize API base URL by removing trailing slashes
+ * Ensures consistent path concatenation
+ */
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL || 'http://localhost:3001');
+
 // ============ LOCAL STORAGE (Active List Only) ============
 
 /**
@@ -80,7 +90,6 @@ async function syncActiveListToDB(items: ShoppingItem[]): Promise<void> {
 
   try {
     const token = getAuthToken();
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     // If items are empty, check if there's an active list to delete
     if (!items || items.length === 0) {
@@ -138,7 +147,6 @@ export async function saveListToHistory(items: ShoppingItem[]): Promise<string> 
   }
 
   const token = getAuthToken();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   const response = await fetch(`${API_BASE_URL}/api/lists`, {
     method: 'POST',
@@ -171,7 +179,6 @@ export async function loadListHistory(): Promise<SavedList[]> {
 
   try {
     const token = getAuthToken();
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const response = await fetch(`${API_BASE_URL}/api/lists`, {
       headers: {
@@ -206,7 +213,6 @@ export async function deleteList(listId: string): Promise<void> {
   }
 
   const token = getAuthToken();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   const response = await fetch(`${API_BASE_URL}/api/lists/${listId}`, {
     method: 'DELETE',
@@ -229,7 +235,6 @@ export async function saveRecipeToDB(recipe: SavedRecipe): Promise<string> {
   }
 
   const token = getAuthToken();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   const response = await fetch(`${API_BASE_URL}/api/recipes`, {
     method: 'POST',
@@ -258,7 +263,6 @@ export async function loadRecipesFromDB(): Promise<SavedRecipe[]> {
 
   try {
     const token = getAuthToken();
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const response = await fetch(`${API_BASE_URL}/api/recipes`, {
       headers: {
@@ -286,7 +290,6 @@ export async function deleteRecipeFromDB(recipeId: string): Promise<void> {
   }
 
   const token = getAuthToken();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   const response = await fetch(`${API_BASE_URL}/api/recipes/${recipeId}`, {
     method: 'DELETE',

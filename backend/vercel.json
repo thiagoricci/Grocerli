@@ -1,4 +1,14 @@
 {
-  "buildCommand": "npx prisma generate",
-  "installCommand": "npm install"
+  "builds": [
+    {
+      "src": "dist/api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/api/index.js"
+    }
+  ]
 }

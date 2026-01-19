@@ -1,6 +1,14 @@
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+/**
+ * Normalize API base URL by removing trailing slashes
+ * Ensures consistent path concatenation
+ */
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_URL || 'http://localhost:3001')
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
