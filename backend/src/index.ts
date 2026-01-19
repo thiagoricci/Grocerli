@@ -10,15 +10,21 @@ const app = express()
 const prisma = new PrismaClient()
 const PORT = process.env.PORT || 3001
 
-app.use(helmet())
-app.use(cors({
+const corsOptions = {
   origin: [
     'http://localhost:8080',
+    'http://localhost:5173',
     'https://sous-chefy.vercel.app',
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
   ],
-  credentials: true
-}))
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}
+
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
+app.use(helmet())
 app.use(express.json())
 
 // Make prisma available to routes

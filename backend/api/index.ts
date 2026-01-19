@@ -27,34 +27,25 @@ if (process.env.NODE_ENV === 'production') {
 
 const app = express()
 
-// Global error handler
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error('Unhandled error:', err)
-  res.status(500).json({ error: 'Internal server error', message: err.message })
-})
-
-app.use(helmet())
-
-// Explicitly handle OPTIONS requests
-app.options(/.*/, cors({
+// CORS Configuration
+const corsOptions = {
   origin: [
     'http://localhost:8080',
+    'http://localhost:5173',
     'https://sous-chefy.vercel.app',
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}))
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}
 
-app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'https://sous-chefy.vercel.app',
-    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
-  ],
-  credentials: true
-}))
+// Apply CORS before anything else
+app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
+
+app.use(helmet())
+
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
@@ -68,7 +59,8 @@ app.use((req: any, res: any, next: any) => {
 app.use((req: any, res: any, next: any) => {
   console.log(`${req.method} ${req.path}`, {
     query: req.query,
-    body: req.body ? 'present' : 'absent'
+    body: req.body ? 'present' : 'absent',
+    origin: req.headers.origin
   })
   next()
 })
@@ -84,8 +76,14 @@ app.get('/health', (req, res) => {
 })
 
 // 404 handler
-app.use((req: any, res: any) => {
+app.use((req: any, res: any, next: any) => {
   res.status(404).json({ error: 'Not found' })
+})
+
+// Global error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error('Unhandled error:', err)
+  res.status(500).json({ error: 'Internal server error', message: err.message })
 })
 
 export default app
