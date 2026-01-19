@@ -6,12 +6,24 @@ import listsRouter from '../src/routes/lists'
 import recipesRouter from '../src/routes/recipes'
 import authRouter from '../src/routes/auth'
 
+// Singleton pattern for Prisma client in serverless environment
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+const prisma = globalForPrisma.prisma || new PrismaClient()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma
+}
+
 const app = express()
-const prisma = new PrismaClient()
 
 app.use(helmet())
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+  origin: [
+    'http://localhost:8080',
+    'https://sous-chefy.vercel.app',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+  ],
   credentials: true
 }))
 app.use(express.json())
