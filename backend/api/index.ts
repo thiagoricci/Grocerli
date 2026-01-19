@@ -86,4 +86,7 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: 'Internal server error', message: err.message })
 })
 
-export default app
+// Vercel serverless function handler
+export default function handler(req: any, res: any) {
+  return app(req, res)
+}

@@ -6,8 +6,16 @@
 
 # Ignore Prisma migrations (they're already in the database)
 
-prisma/migrations/\*.sql
+prisma/migrations/*.sql
 
 # Ignore development artifacts
 
 node_modules/.prisma
+
+# Ignore local development server (not for Vercel deployment)
+
+src/local-server.ts
+dist/local-server.js
+dist/local-server.js.map
+dist/local-server.d.ts
+dist/local-server.d.ts.map

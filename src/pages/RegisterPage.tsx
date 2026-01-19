@@ -50,11 +50,20 @@ export const RegisterPage: React.FC = () => {
       })
       navigate('/app', { replace: true })
     } catch (error: any) {
-      toast({
-        title: 'Registration failed',
-        description: error.response?.data?.error || 'Please try again.',
-        variant: 'destructive',
-      })
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        toast({
+          title: 'Account already exists',
+          description: 'An account with this email already exists. Please sign in instead.',
+          variant: 'destructive',
+        })
+      } else {
+        toast({
+          title: 'Registration failed',
+          description: error.response?.data?.error || 'Please try again.',
+          variant: 'destructive',
+        })
+      }
     } finally {
       setIsLoading(false)
     }
