@@ -10,13 +10,10 @@ const LandingPage = () => {
       {/* Top Section */}
       <div className="flex flex-col items-center w-full max-w-md mx-auto z-10">
         <h1 className="text-5xl font-bold text-primary mb-2 tracking-tight">SousChefy</h1>
-        <p className="text-gray-500 text-sm font-medium tracking-wide uppercase text-[0.8rem]">
-          Your all-in-one kitchen assistant
-        </p>
       </div>
 
       {/* Hero Image Section */}
-      <div className="flex-1 flex items-center justify-center w-full my-4 relative">
+      <div className="flex-1 flex items-center justify-center w-full mb-4 relative">
         <div className="relative w-full max-w-sm">
             <img 
               src="/landing.png" 
