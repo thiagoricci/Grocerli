@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authApi } from '@/lib/auth-api'
-import { setAuthToken, clearAuthToken, getAuthToken, setUserData, clearUserData, getUserData } from '@/lib/storage'
+import { setAuthToken, clearAuthToken, getAuthToken, setUserData, clearUserData, getUserData } from '@/lib/indexedDB'
+import { updateCachedToken } from '@/lib/api'
 import type { AuthContextType, User, LoginCredentials, RegisterCredentials } from '@/types/auth'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -17,8 +18,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let cachedUser: User | null = null
     
     try {
-      token = getAuthToken()
-      cachedUser = getUserData()
+      token = await getAuthToken()
+      cachedUser = await getUserData()
 
       // If we have both token and cached user data, use it immediately
       if (token && cachedUser) {
@@ -104,22 +105,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: LoginCredentials) => {
     const response = await authApi.login(credentials)
-    setAuthToken(response.token)
-    setUserData(response.user)
+    await setAuthToken(response.token)
+    await setUserData(response.user)
+    updateCachedToken(response.token)
     setUser(response.user)
   }
 
   const register = async (credentials: RegisterCredentials) => {
     const response = await authApi.register(credentials)
-    setAuthToken(response.token)
-    setUserData(response.user)
+    await setAuthToken(response.token)
+    await setUserData(response.user)
+    updateCachedToken(response.token)
     setUser(response.user)
   }
 
-  const logout = () => {
+  const logout = async () => {
     authApi.logout()
-    clearAuthToken()
-    clearUserData()
+    await clearAuthToken()
+    await clearUserData()
+    updateCachedToken(null)
     setUser(null)
   }
 
