@@ -18,10 +18,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
-  { id: 'search', label: 'Search', icon: <Search className="w-5 h-5" /> },
+  { id: 'pantry', label: 'Pantry', icon: <Package className="w-5 h-5" /> },
+  { id: 'search', label: 'Recipe', icon: <Search className="w-5 h-5" /> },
   { id: 'cooking', label: 'Cooking', icon: <ChefHat className="w-5 h-5" /> },
   { id: 'favorites', label: 'Favorites', icon: <Heart className="w-5 h-5" /> },
-  { id: 'pantry', label: 'Pantry', icon: <Package className="w-5 h-5" /> },
 ];
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({

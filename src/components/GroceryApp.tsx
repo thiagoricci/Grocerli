@@ -1314,7 +1314,7 @@ export const GroceryApp: React.FC = () => {
           {activeView === 'pantry' && (
             <div className="space-y-4 animate-fade-in">
               {/* Pantry Tab */}
-              <PantryTab onAddMissingIngredients={handleAddMissingIngredients} />
+              <PantryTab onAddMissingIngredients={handleAddMissingIngredients} onSaveRecipe={handleSaveRecipe} />
             </div>
           )}
         </div>

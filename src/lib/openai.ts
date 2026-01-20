@@ -670,10 +670,6 @@ async function* streamPantryRecipesFromResponse(
                   const isValid = isValidPantryRecipe(obj);
                   if (!isValid) {
                     invalidObjectsFound++;
-                    console.log('[Pantry Recipe Validation Failed]', {
-                      object: obj,
-                      reason: 'Does not match PantryRecipe structure'
-                    });
                   }
                   return isValid;
                 });
@@ -693,13 +689,6 @@ async function* streamPantryRecipesFromResponse(
                 );
 
                 if (newRecipes.length > 0) {
-                  console.log('[Pantry Recipe Stream]', {
-                    totalFound: totalObjectsFound,
-                    validFound: validObjectsFound,
-                    invalidFound: invalidObjectsFound,
-                    newRecipes: newRecipes.length,
-                    recipeNames: newRecipes.map(r => r.name)
-                  });
                   yield newRecipes;
                 }
               }
@@ -713,12 +702,6 @@ async function* streamPantryRecipesFromResponse(
     }
   } finally {
     reader.releaseLock();
-    console.log('[Pantry Recipe Generation Complete]', {
-      totalObjectsFound,
-      validObjectsFound,
-      invalidObjectsFound,
-      finalRecipes: seenRecipes.size
-    });
   }
 }
 

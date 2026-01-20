@@ -10,15 +10,17 @@ import { pantryApi } from '@/lib/pantry-api';
 import { generateRecipesFromPantry, classifyPantryItem } from '@/lib/openai';
 import type { PantryItem, PantryRecipe, PantryCategory } from '@/types/pantry';
 import type { ShoppingItem } from './ShoppingList';
+import type { SavedRecipe } from '@/types/recipe';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Sparkles, Plus, Package, Clock, ChefHat, AlertCircle, RefreshCw, CheckCircle2, BookOpen, ShoppingCart, Check, X, Edit2 } from 'lucide-react';
+import { Trash2, Sparkles, Plus, Package, Clock, ChefHat, AlertCircle, RefreshCw, CheckCircle2, BookOpen, ShoppingCart, Check, X, Edit2, Bookmark } from 'lucide-react';
 
 interface PantryTabProps {
   onAddMissingIngredients: (ingredients: ShoppingItem[]) => void;
+  onSaveRecipe: (recipe: SavedRecipe) => Promise<void>;
 }
 
-export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients }) => {
+export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients, onSaveRecipe }) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -224,12 +226,7 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
     setDebugInfo(null);
 
     try {
-      console.log('[Pantry Generation] Starting with items:', pantryItems);
-
       const recipes = await generateRecipesFromPantry(pantryItems);
-
-      console.log('[Pantry Generation] Received recipes:', recipes);
-      console.log('[Pantry Generation] Recipe count:', recipes.length);
 
       setGeneratedRecipes(recipes);
 
@@ -307,6 +304,47 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
       description: `Added ${shoppingItems.length} missing ingredients to your list.`,
     });
   }, [onAddMissingIngredients, toast]);
+
+  // Save pantry recipe to saved recipes
+  const handleSavePantryRecipe = useCallback(async (pantryRecipe: PantryRecipe) => {
+    try {
+      // Convert PantryRecipe to SavedRecipe format
+      const savedRecipe: SavedRecipe = {
+        id: `pantry-recipe-${Date.now()}`,
+        name: pantryRecipe.name,
+        description: pantryRecipe.description,
+        ingredients: [
+          ...pantryRecipe.ingredientsUsedFromPantry.map(ing => ({
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit
+          })),
+          ...pantryRecipe.missingIngredients.map(ing => ({
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit
+          }))
+        ],
+        instructions: pantryRecipe.instructions,
+        prepTime: pantryRecipe.estimatedTime,
+        difficulty: pantryRecipe.difficulty,
+        savedAt: Date.now()
+      };
+
+      await onSaveRecipe(savedRecipe);
+      toast({
+        title: 'Recipe Saved',
+        description: `"${pantryRecipe.name}" has been saved to your recipes.`,
+      });
+    } catch (error: any) {
+      console.error('Failed to save pantry recipe:', error);
+      toast({
+        title: 'Save Failed',
+        description: error.response?.data?.error || 'Failed to save recipe. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [onSaveRecipe, toast]);
   
   // Get pantry coverage badge color
   const getCoverageBadge = (coverage: number) => {
@@ -419,20 +457,6 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
         </Button>
       )}
 
-      {/* Loading State */}
-      {isGenerating && (
-        <Card className="shadow-card rounded-xl md:rounded-2xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardContent className="py-8 text-center">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary animate-pulse" />
-            <p className="text-lg font-semibold mb-2">
-              Generating Recipes...
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Analyzing your pantry ingredients and finding the best recipes
-            </p>
-          </CardContent>
-        </Card>
-      )}
       
       {/* Pantry Items */}
       {pantryItems.length > 0 && (
@@ -542,54 +566,54 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
       {/* Generated Recipes */}
       {generatedRecipes.length > 0 && (
         <Card className="shadow-card rounded-xl md:rounded-2xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ChefHat className="w-5 h-5" />
-              Recipes You Can Make ({generatedRecipes.length})
+          <CardHeader className="pb-3 md:pb-4">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <ChefHat className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="truncate">Recipes You Can Make ({generatedRecipes.length})</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs md:text-sm">
               Based on your pantry items
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-4">
+            <ScrollArea className="h-[300px] md:h-[400px] pr-2 md:pr-4">
+              <div className="space-y-3 md:space-y-4">
                 {generatedRecipes.map(recipe => (
                   <Card key={recipe.id} className="border border-border/50 hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <CardTitle className="text-base mb-1 flex items-center gap-2">
-                            {recipe.name}
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm md:text-base mb-1 flex items-center gap-2 flex-wrap">
+                            <span className="truncate">{recipe.name}</span>
                             {getCoverageBadge(recipe.pantryCoverage)}
                           </CardTitle>
-                          <CardDescription className="text-sm">
+                          <CardDescription className="text-xs md:text-sm line-clamp-2">
                             {recipe.description}
                           </CardDescription>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-3 md:gap-4 mt-2 text-xs md:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {recipe.estimatedTime}
+                          <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="truncate">{recipe.estimatedTime}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <ChefHat className="w-4 h-4" />
-                          {recipe.difficulty}
+                          <ChefHat className="w-3 h-3 md:w-4 md:h-4" />
+                          <span className="truncate">{recipe.difficulty}</span>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      {/* Ingredients from Pantry */}
+                    <CardContent className="space-y-2 md:space-y-3 px-3 md:px-6 pb-3 md:pb-6">
+                      {/* Ingredients from Pantry - Collapsible on mobile */}
                       {recipe.ingredientsUsedFromPantry.length > 0 && (
-                        <div className="bg-green-50 rounded-lg p-3">
-                          <p className="text-sm font-semibold mb-2 text-green-700 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4" />
-                            From Your Pantry ({recipe.ingredientsUsedFromPantry.length})
+                        <div className="bg-green-50 rounded-lg p-2 md:p-3">
+                          <p className="text-xs md:text-sm font-semibold mb-1 md:mb-2 text-green-700 flex items-center gap-1 md:gap-2">
+                            <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>From Pantry ({recipe.ingredientsUsedFromPantry.length})</span>
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {recipe.ingredientsUsedFromPantry.map((ing, idx) => (
-                              <Badge key={idx} variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">
+                              <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs bg-green-100 text-green-800 hover:bg-green-200 px-1.5 md:px-2 py-0.5">
                                 {ing.name}
                                 {ing.quantity && ` (${ing.quantity}${ing.unit ? ` ${ing.unit}` : ''})`}
                               </Badge>
@@ -598,16 +622,16 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
                         </div>
                       )}
 
-                      {/* Missing Ingredients */}
+                      {/* Missing Ingredients - Collapsible on mobile */}
                       {recipe.missingIngredients.length > 0 && (
-                        <div className="bg-orange-50 rounded-lg p-3">
-                          <p className="text-sm font-semibold mb-2 text-orange-700 flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4" />
-                            Missing ({recipe.missingIngredients.length})
+                        <div className="bg-orange-50 rounded-lg p-2 md:p-3">
+                          <p className="text-xs md:text-sm font-semibold mb-1 md:mb-2 text-orange-700 flex items-center gap-1 md:gap-2">
+                            <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>Missing ({recipe.missingIngredients.length})</span>
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {recipe.missingIngredients.map((ing, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs border-orange-300 text-orange-700 hover:bg-orange-100">
+                              <Badge key={idx} variant="outline" className="text-[10px] md:text-xs border-orange-300 text-orange-700 hover:bg-orange-100 px-1.5 md:px-2 py-0.5">
                                 {ing.name}
                                 {ing.quantity && ` (${ing.quantity}${ing.unit ? ` ${ing.unit}` : ''})`}
                               </Badge>
@@ -616,42 +640,54 @@ export const PantryTab: React.FC<PantryTabProps> = ({ onAddMissingIngredients })
                         </div>
                       )}
 
-                      {/* Instructions Preview */}
+                      {/* Instructions Preview - Simplified on mobile */}
                       {recipe.instructions.length > 0 && (
-                        <div className="bg-muted/50 rounded-lg p-3">
-                          <p className="text-sm font-semibold mb-2 text-muted-700 flex items-center gap-2">
-                            <BookOpen className="w-4 h-4" />
-                            Instructions
+                        <div className="bg-muted/50 rounded-lg p-2 md:p-3">
+                          <p className="text-xs md:text-sm font-semibold mb-1 md:mb-2 text-muted-700 flex items-center gap-1 md:gap-2">
+                            <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>Instructions</span>
                           </p>
-                          <ol className="space-y-2 text-sm">
-                            {recipe.instructions.slice(0, 3).map((instruction, idx) => (
-                              <li key={idx} className="flex gap-2">
-                                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                          <ol className="space-y-1 md:space-y-2 text-xs md:text-sm">
+                            {recipe.instructions.slice(0, 2).map((instruction, idx) => (
+                              <li key={idx} className="flex gap-1 md:gap-2">
+                                <span className="flex-shrink-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] md:text-xs font-semibold">
                                   {idx + 1}
                                 </span>
-                                <span className="flex-1 line-clamp-2">{instruction}</span>
+                                <span className="flex-1 line-clamp-1 md:line-clamp-2">{instruction}</span>
                               </li>
                             ))}
-                            {recipe.instructions.length > 3 && (
-                              <li className="text-sm text-muted-foreground italic">
-                                ...and {recipe.instructions.length - 3} more steps
+                            {recipe.instructions.length > 2 && (
+                              <li className="text-xs md:text-sm text-muted-foreground italic">
+                                +{recipe.instructions.length - 2} more steps
                               </li>
                             )}
                           </ol>
                         </div>
                       )}
 
-                      {/* Add Missing to List Button */}
-                      {recipe.missingIngredients.length > 0 && (
+                      {/* Action Buttons - Stacked on mobile */}
+                      <div className="flex flex-col md:flex-row gap-2">
                         <Button
-                          onClick={() => handleAddMissingToShoppingList(recipe)}
-                          className="w-full"
-                          variant="default"
+                          onClick={() => handleSavePantryRecipe(recipe)}
+                          className="w-full md:flex-1"
+                          variant="outline"
+                          size="sm"
                         >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          Add Missing to Shopping List
+                          <Bookmark className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                          <span className="text-xs md:text-sm">Save Recipe</span>
                         </Button>
-                      )}
+                        {recipe.missingIngredients.length > 0 && (
+                          <Button
+                            onClick={() => handleAddMissingToShoppingList(recipe)}
+                            className="w-full md:flex-1"
+                            variant="default"
+                            size="sm"
+                          >
+                            <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                            <span className="text-xs md:text-sm">Add Missing</span>
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
